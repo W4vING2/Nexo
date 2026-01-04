@@ -4,27 +4,28 @@ import FooterBar from '@/components/ui/FooterBar'
 import Header from '@/components/ui/Header'
 import Main from '@/components/ui/Main'
 import nexoStore from '@/store/nexoStore'
+import { useEffect } from 'react'
 import Sign from '../components/Sign'
 
 export default function HomePage() {
-	const { isLogged } = nexoStore()
-	const pastUser = localStorage.getItem('user')
-	if (pastUser && !isLogged) {
-		nexoStore.getState().setIsLogged(true)
-		const user = JSON.parse(pastUser)
-		nexoStore.getState().setUser(user)
-	}
+	const { isLogged, setIsLogged, setUser } = nexoStore()
+
+	useEffect(() => {
+		const pastUser = localStorage.getItem('user')
+		if (pastUser && !isLogged) {
+			const user = JSON.parse(pastUser)
+			setUser(user)
+			setIsLogged(true)
+		}
+	}, [isLogged, setIsLogged, setUser])
+
+	if (!isLogged) return <Sign />
+
 	return (
 		<>
-			{isLogged ? (
-				<>
-					<Header />
-					<Main />
-					<FooterBar />
-				</>
-			) : (
-				<Sign />
-			)}
+			<Header />
+			<Main />
+			<FooterBar />
 		</>
 	)
 }
