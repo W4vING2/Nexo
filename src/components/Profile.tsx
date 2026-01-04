@@ -2,6 +2,7 @@
 
 import nexoStore from '@/store/nexoStore'
 import Image from 'next/image'
+import ProfileEditModal from './ui/ProfileEdit'
 
 export default function Profile() {
 	const { user } = nexoStore()
@@ -37,9 +38,7 @@ export default function Profile() {
 						<p className='text-gray-400 text-sm mt-1'>@{user.username}</p>
 					</div>
 
-					<button className='border border-gray-600 px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-gray-700/50 transition'>
-						Редактировать
-					</button>
+					<ProfileEditModal />
 				</div>
 
 				{user.bio && (
