@@ -10,12 +10,16 @@ export default function Login() {
 	const onSubmit = async (formData: FormData) => {
 		await registerUser(formData)
 		setIsLogged(true)
+		const email = formData.get('email') as string
+		const password = formData.get('password') as string
+		const name = formData.get('username') as string
+		localStorage.setItem('user', JSON.stringify({ email, password, name }))
 		setUser({
-			email: formData.get('email') as string,
+			email: email,
 			bio: '',
 			avatarUrl: '',
-			name: formData.get('username') as string,
-			username: formData.get('username') as string,
+			name: name,
+			username: name,
 		})
 	}
 

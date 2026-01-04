@@ -22,7 +22,7 @@ export default function RootLayout({
 				<meta name='twitter:card' content='summary_large_image' />
 				<meta name='twitter:title' content='Nexo' />
 				<meta name='twitter:description' content='Social media app' />
-				<meta name='twitter:image' content='/og-image.png' />
+				<meta name='twitter:image' content='/favicon.png' />
 			</head>
 			<body>{children}</body>
 		</html>

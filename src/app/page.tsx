@@ -8,6 +8,12 @@ import Sign from '../components/Sign'
 
 export default function HomePage() {
 	const { isLogged } = nexoStore()
+	const pastUser = localStorage.getItem('user')
+	if (pastUser && !isLogged) {
+		nexoStore.getState().setIsLogged(true)
+		const user = JSON.parse(pastUser)
+		nexoStore.getState().setUser(user)
+	}
 	return (
 		<>
 			{isLogged ? (
