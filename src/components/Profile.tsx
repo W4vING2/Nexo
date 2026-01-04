@@ -8,22 +8,22 @@ export default function Profile() {
 
 	if (!user) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-black text-white'>
-				<p>Пользователь не найден</p>
+			<div className='flex items-center justify-center min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white px-4'>
+				<p className='text-gray-400 text-lg'>Пользователь не найден</p>
 			</div>
 		)
 	}
 
 	return (
-		<div className='min-h-screen bg-black text-white'>
-			<div className='relative h-40 bg-zinc-800'>
+		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
+			<div className='relative h-40 bg-gray-800/80 backdrop-blur-md shadow-lg'>
 				<div className='absolute -bottom-12 left-4'>
 					<Image
 						width={600}
 						height={600}
 						src={user.avatarUrl || '/logo.png'}
 						alt='avatar'
-						className='w-24 h-24 rounded-full border-4 border-black object-cover'
+						className='w-28 h-28 rounded-full border-4 border-gray-900 object-cover shadow-xl'
 					/>
 				</div>
 			</div>
@@ -31,19 +31,25 @@ export default function Profile() {
 			<div className='pt-16 px-4 max-w-xl mx-auto'>
 				<div className='flex justify-between items-start'>
 					<div>
-						<h1 className='text-xl font-bold leading-tight'>{user.name}</h1>
-						<p className='text-gray-400'>@{user.username}</p>
+						<h1 className='text-2xl font-extrabold leading-tight'>
+							{user.name}
+						</h1>
+						<p className='text-gray-400 text-sm mt-1'>@{user.username}</p>
 					</div>
 
-					<button className='border border-gray-600 px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-zinc-900 transition'>
+					<button className='border border-gray-600 px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-gray-700/50 transition'>
 						Редактировать
 					</button>
 				</div>
 
-				{user.bio && <p className='mt-3 text-sm text-gray-200'>{user.bio}</p>}
+				{user.bio && (
+					<p className='mt-3 text-sm text-gray-300 bg-gray-800/50 p-3 rounded-xl backdrop-blur-sm'>
+						{user.bio}
+					</p>
+				)}
 
-				<div className='mt-6 border-b border-gray-800 flex'>
-					<button className='flex-1 py-3 text-sm text-gray-400 hover:text-white hover:bg-zinc-900 transition'>
+				<div className='mt-6 border-b border-gray-800 flex rounded-xl overflow-hidden shadow-sm'>
+					<button className='flex-1 py-3 text-sm text-gray-400 hover:text-white hover:bg-gray-700 transition'>
 						Посты
 					</button>
 				</div>

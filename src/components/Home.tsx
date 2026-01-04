@@ -21,7 +21,7 @@ export default function Home() {
 	]
 
 	return (
-		<main className='min-h-screen bg-black text-white flex flex-col gap-4 py-4'>
+		<main className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white flex flex-col gap-4 py-4 px-4'>
 			{posts.map((post, idx) => (
 				<Post key={idx} user={post.user} text={post.text} />
 			))}
