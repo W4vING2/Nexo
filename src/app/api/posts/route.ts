@@ -24,3 +24,21 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json({ error: (err as Error).message }, { status: 500 })
 	}
 }
+
+export async function GET(req: NextRequest) {
+	try {
+		const userId = req.nextUrl.searchParams.get('userId')
+		if (!userId) return NextResponse.json({ posts: [] })
+
+		const posts = await prisma.post.findMany({
+			where: { authorId: Number(userId) },
+			orderBy: { createdAt: 'desc' },
+			select: { id: true, content: true, createdAt: true },
+		})
+
+		return NextResponse.json({ posts })
+	} catch (err) {
+		console.error(err)
+		return NextResponse.json({ posts: [] }, { status: 500 })
+	}
+}

@@ -2,7 +2,7 @@
 
 import nexoStore from '@/store/nexoStore'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ProfileEditModal from './ui/ProfileEdit'
 
 export interface Post {
@@ -15,18 +15,19 @@ export default function Profile() {
 	const { user, setIsLogged, setUser } = nexoStore()
 	const [posts, setPosts] = useState<Post[]>([])
 	const [loading, setLoading] = useState(false)
+	const [content, setContent] = useState('')
 
-	if (!user) {
-		return (
-			<div className='flex items-center justify-center min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white px-4'>
-				<p className='text-gray-400 text-lg'>Пользователь не найден</p>
-			</div>
-		)
-	}
+	// Загружаем все посты пользователя при монтировании
+	useEffect(() => {
+		if (!user?.id) return
+		fetch(`/api/posts?userId=${user.id}`)
+			.then(res => res.json())
+			.then(data => setPosts(data.posts))
+			.catch(err => console.error(err))
+	}, [user?.id])
 
-	const onCreatePost = async (formData: FormData) => {
-		const content = formData.get('content')
-		if (!content || !user?.id || loading) return
+	const onCreatePost = async () => {
+		if (!content.trim() || !user?.id || loading) return
 		setLoading(true)
 		try {
 			const res = await fetch('/api/posts', {
@@ -34,15 +35,25 @@ export default function Profile() {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ content, userId: user.id }),
 			})
+
 			if (!res.ok) throw new Error('Ошибка при создании поста')
 			const post: Post = await res.json()
 			setPosts(prev => [post, ...prev])
+			setContent('')
 		} catch (err) {
 			console.error(err)
 			alert('Ошибка при создании поста')
 		} finally {
 			setLoading(false)
 		}
+	}
+
+	if (!user) {
+		return (
+			<div className='flex items-center justify-center min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white px-4'>
+				<p className='text-gray-400 text-lg'>Пользователь не найден</p>
+			</div>
+		)
 	}
 
 	return (
@@ -75,39 +86,42 @@ export default function Profile() {
 					</p>
 				)}
 
-				<form
-					className='mt-6 bg-gray-900/70 p-4 rounded-2xl border border-gray-800'
-					action={onCreatePost}
-				>
+				<div className='mt-6 bg-gray-900/70 p-4 rounded-2xl border border-gray-800'>
 					<textarea
-						name='content'
+						value={content}
+						onChange={e => setContent(e.target.value)}
 						placeholder='Что нового?'
 						className='w-full bg-transparent resize-none text-sm text-white placeholder-gray-500 focus:outline-none'
 						rows={3}
 					/>
 					<div className='flex justify-end mt-3'>
-						<button type='submit' disabled={loading} className='z-99'>
+						<button
+							type='button'
+							onClick={onCreatePost}
+							disabled={loading}
+							className='px-4 py-2 rounded-full bg-linear-to-r from-blue-500 to-purple-600 text-black text-sm font-semibold disabled:opacity-50'
+						>
 							{loading ? 'Публикация...' : 'Опубликовать'}
 						</button>
 					</div>
-				</form>
+				</div>
 
 				<div className='mt-6 flex flex-col gap-4'>
-					{posts.length === 0 && (
+					{posts.length === 0 ? (
 						<p className='text-center text-gray-400'>Пока нет постов</p>
+					) : (
+						posts.map(post => (
+							<div
+								key={post.id}
+								className='bg-gray-800/60 p-4 rounded-2xl text-sm'
+							>
+								<p>{post.content}</p>
+								<p className='mt-2 text-xs text-gray-500'>
+									{new Date(post.createdAt).toLocaleString()}
+								</p>
+							</div>
+						))
 					)}
-
-					{posts.map(post => (
-						<div
-							key={post.id}
-							className='bg-gray-800/60 p-4 rounded-2xl text-sm'
-						>
-							<p>{post.content}</p>
-							<p className='mt-2 text-xs text-gray-500'>
-								{new Date(post.createdAt).toLocaleString()}
-							</p>
-						</div>
-					))}
 				</div>
 			</div>
 
