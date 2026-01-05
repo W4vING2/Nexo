@@ -1,26 +1,41 @@
 'use client'
 
 import nexoStore from '@/store/nexoStore'
+import { getUserByUsername } from '@/utils/getUserByUsername'
 import registerUser from '@/utils/registerUser'
 import Link from 'next/link'
 
-export default function Login() {
+export default function Register() {
 	const { setIsLogged, setUser } = nexoStore()
 
 	const onSubmit = async (formData: FormData) => {
-		await registerUser(formData)
-		setIsLogged(true)
-		const email = formData.get('email') as string
+		const username = formData.get('username') as string
 		const password = formData.get('password') as string
-		const name = formData.get('username') as string
-		localStorage.setItem('user', JSON.stringify({ email, password, name }))
+
+		await registerUser(formData)
+		const userFromDb = await getUserByUsername(username)
+		if (!userFromDb) return
+
+		localStorage.setItem(
+			'user',
+			JSON.stringify({
+				email: userFromDb.email,
+				password,
+				name: userFromDb.name,
+				username: userFromDb.username,
+				bio: userFromDb.bio || '',
+				avatarUrl: userFromDb.avatarUrl || '',
+			})
+		)
+
 		setUser({
-			email: email,
-			bio: '',
-			avatarUrl: '',
-			name: name,
-			username: name,
+			email: userFromDb.email,
+			name: userFromDb.name,
+			username: userFromDb.username || '',
+			bio: userFromDb.bio || '',
+			avatarUrl: userFromDb.avatarUrl || '',
 		})
+		setIsLogged(true)
 	}
 
 	return (

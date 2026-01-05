@@ -7,12 +7,12 @@ export default async function registerUser(formData: FormData) {
 	const password = formData.get('password') as string
 	const name = formData.get('username') as string
 	if (!email || !password) throw new Error('Email and password are required')
-	console.log('User was registered:', { email, password, name })
 	await prisma.user.create({
 		data: {
 			email,
 			password,
 			name,
+			username: name,
 		},
 	})
 }

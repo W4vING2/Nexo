@@ -10,22 +10,34 @@ export default function Login() {
 	const { setIsLogged, setUser } = nexoStore()
 
 	const onSubmit = async (formData: FormData) => {
-		await autorizeUser(formData)
-		setIsLogged(true)
-		const email = formData.get('email') as string
 		const password = formData.get('password') as string
-		const user = await findUser(formData)
+
+		await autorizeUser(formData)
+
+		const userFromDb = await findUser(formData)
+		if (!userFromDb) return
+
 		localStorage.setItem(
 			'user',
-			JSON.stringify({ email, password, name: user?.name as string })
+			JSON.stringify({
+				email: userFromDb.email,
+				password,
+				name: userFromDb.name,
+				username: userFromDb.username,
+				bio: userFromDb.bio || '',
+				avatarUrl: userFromDb.avatarUrl || '',
+			})
 		)
+
 		setUser({
-			email: email,
-			bio: '',
-			avatarUrl: '',
-			name: user?.name as string,
-			username: user?.name as string,
+			email: userFromDb.email,
+			name: userFromDb.name,
+			username: userFromDb.username || '',
+			bio: userFromDb.bio || '',
+			avatarUrl: userFromDb.avatarUrl || '',
 		})
+		setIsLogged(true)
+
 		redirect('/')
 	}
 

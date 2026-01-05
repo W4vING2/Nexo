@@ -5,7 +5,7 @@ import Image from 'next/image'
 import ProfileEditModal from './ui/ProfileEdit'
 
 export default function Profile() {
-	const { user } = nexoStore()
+	const { user, setIsLogged, setUser } = nexoStore()
 
 	if (!user) {
 		return (
@@ -25,6 +25,7 @@ export default function Profile() {
 						src={user.avatarUrl || '/logo.png'}
 						alt='avatar'
 						className='w-28 h-28 rounded-full border-4 border-gray-900 object-cover shadow-xl'
+						loading='eager'
 					/>
 				</div>
 			</div>
@@ -55,6 +56,28 @@ export default function Profile() {
 
 				<div className='py-10 text-center text-gray-400'>Пока нет постов</div>
 			</div>
+			<button
+				onClick={() => {
+					localStorage.removeItem('user')
+					setUser(null)
+					setIsLogged(false)
+				}}
+				className='
+		mt-6
+		w-full
+		rounded-full
+		border border-red-500/40
+		px-4 py-2.5
+		text-sm font-semibold
+		text-red-400
+		transition
+		hover:bg-red-500/10
+		hover:border-red-500
+		active:scale-[0.98]
+	'
+			>
+				Выйти из аккаунта
+			</button>
 		</div>
 	)
 }
