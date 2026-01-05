@@ -4,6 +4,7 @@ import nexoStore from '@/store/nexoStore'
 import { searchUsersByUsername } from '@/utils/searchUser'
 import { Search as SearchIcon } from 'lucide-react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 interface User {
@@ -17,6 +18,7 @@ export default function Search() {
 	const [query, setQuery] = useState('')
 	const [users, setUsers] = useState<User[]>([])
 	const [loading, setLoading] = useState(false)
+	const router = useRouter()
 
 	useEffect(() => {
 		let active = true
@@ -53,6 +55,11 @@ export default function Search() {
 		}
 	}, [query, currentUser])
 
+	const handleUserClick = (username: string | null) => {
+		if (!username) return
+		router.push(`/user/${username}`)
+	}
+
 	return (
 		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
 			<div className='sticky top-0 z-40 bg-black/80 backdrop-blur border-b border-gray-800'>
@@ -83,6 +90,7 @@ export default function Search() {
 				{users.map(user => (
 					<div
 						key={user.id}
+						onClick={() => handleUserClick(user.username)}
 						className='flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition cursor-pointer'
 					>
 						<div className='w-10 h-10 rounded-full bg-gray-700 overflow-hidden'>
