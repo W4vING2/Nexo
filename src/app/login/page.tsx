@@ -1,44 +1,40 @@
 'use client'
 
 import nexoStore from '@/store/nexoStore'
-import autorizeUser from '@/utils/autorizeUser'
-import { findUser } from '@/utils/findUser'
+import { authorizeUser } from '@/utils/autorizeUser'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 export default function Login() {
 	const { setIsLogged, setUser } = nexoStore()
+	const router = useRouter()
 
 	const onSubmit = async (formData: FormData) => {
-		const password = formData.get('password') as string
-
-		await autorizeUser(formData)
-
-		const userFromDb = await findUser(formData)
-		if (!userFromDb) return
+		const user = await authorizeUser(formData)
 
 		localStorage.setItem(
 			'user',
 			JSON.stringify({
-				email: userFromDb.email,
-				password,
-				name: userFromDb.name,
-				username: userFromDb.username,
-				bio: userFromDb.bio || '',
-				avatarUrl: userFromDb.avatarUrl || '',
+				id: user.id,
+				email: user.email,
+				username: user.username,
+				name: user.name,
+				bio: user.bio || '',
+				avatarUrl: user.avatarUrl || '',
 			})
 		)
 
 		setUser({
-			email: userFromDb.email,
-			name: userFromDb.name,
-			username: userFromDb.username || '',
-			bio: userFromDb.bio || '',
-			avatarUrl: userFromDb.avatarUrl || '',
+			id: user.id,
+			email: user.email,
+			username: user.username || '',
+			name: user.name as string,
+			bio: user.bio || '',
+			avatarUrl: user.avatarUrl || '',
 		})
-		setIsLogged(true)
 
-		redirect('/')
+		setIsLogged(true)
+		router.push('/')
 	}
 
 	return (

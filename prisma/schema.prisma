@@ -16,4 +16,17 @@ model User {
   username  String?  @unique
   avatarUrl String?
   createdAt DateTime @default(now())
+
+  posts Post[]
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  content   String
+  authorId  Int
+  createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
 }

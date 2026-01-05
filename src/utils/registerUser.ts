@@ -1,18 +1,33 @@
 'use server'
 
-import prisma from '../../lib/prisma'
+import prisma from '@/../lib/prisma'
+import bcrypt from 'bcryptjs'
 
-export default async function registerUser(formData: FormData) {
+export async function registerUser(formData: FormData) {
 	const email = formData.get('email') as string
 	const password = formData.get('password') as string
-	const name = formData.get('username') as string
-	if (!email || !password) throw new Error('Email and password are required')
-	await prisma.user.create({
+	const username = formData.get('username') as string
+
+	if (!email || !password || !username) throw new Error('Missing fields')
+
+	const hashedPassword = await bcrypt.hash(password, 10)
+
+	const user = await prisma.user.create({
 		data: {
 			email,
-			password,
-			name,
-			username: name,
+			password: hashedPassword,
+			username,
+			name: username,
+		},
+		select: {
+			id: true,
+			email: true,
+			username: true,
+			name: true,
+			bio: true,
+			avatarUrl: true,
 		},
 	})
+
+	return user
 }

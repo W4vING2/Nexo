@@ -1,11 +1,12 @@
 import { create } from 'zustand'
 
 export interface User {
+	id: number
 	email: string
-	bio: string
-	avatarUrl: string
 	name: string
-	username: string
+	username: string | null
+	bio: string | null
+	avatarUrl: string | null
 }
 
 interface StoreState {
@@ -21,9 +22,9 @@ const nexoStore = create<StoreState>(set => ({
 	user: null,
 	isLogged: false,
 	selectedPage: 'home',
-	setSelectedPage: (page: string) => set({ selectedPage: page }),
-	setIsLogged: (status: boolean) => set({ isLogged: status }),
-	setUser: (user: User | null) => set({ user }),
+	setSelectedPage: page => set({ selectedPage: page }),
+	setIsLogged: status => set({ isLogged: status }),
+	setUser: user => set({ user }),
 }))
 
 export default nexoStore
