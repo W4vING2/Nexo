@@ -3,6 +3,7 @@
 import nexoStore from '@/store/nexoStore'
 import { registerUser } from '@/utils/registerUser'
 import Link from 'next/link'
+import Input from './ui/Input'
 
 export default function Register() {
 	const { setIsLogged, setUser } = nexoStore()
@@ -44,24 +45,9 @@ export default function Register() {
 					Регистрация
 				</h1>
 
-				<input
-					type='text'
-					name='email'
-					placeholder='Email'
-					className='bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition'
-				/>
-				<input
-					type='text'
-					name='username'
-					placeholder='Username'
-					className='bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition'
-				/>
-				<input
-					type='password'
-					name='password'
-					placeholder='Password'
-					className='bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition'
-				/>
+				<Input name='name' type='text' placeholder='Name' />
+				<Input name='username' type='text' placeholder='Username' />
+				<Input name='email' type='text' placeholder='Email' />
 
 				<button
 					type='submit'

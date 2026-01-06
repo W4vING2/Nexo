@@ -1,14 +1,7 @@
 'use server'
 
 import prisma from '@/../lib/prisma'
-
-interface UpdateUserInput {
-	email: string
-	name?: string
-	username?: string
-	bio?: string
-	avatarUrl?: string
-}
+import type { UpdateUserInput } from '@/types/user.types'
 
 export async function updateUser({
 	email,

@@ -7,3 +7,17 @@ export interface PostProps {
 	likes?: number
 	dislikes?: number
 }
+
+export interface Post {
+	id: number
+	content: string
+	createdAt: Date
+	likes: number
+	dislikes: number
+}
+
+export interface PageProps {
+	params: Promise<{
+		username: string
+	}>
+}

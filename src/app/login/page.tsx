@@ -1,5 +1,6 @@
 'use client'
 
+import Input from '@/components/ui/Input'
 import nexoStore from '@/store/nexoStore'
 import { authorizeUser } from '@/utils/autorizeUser'
 import Link from 'next/link'
@@ -47,18 +48,8 @@ export default function Login() {
 					Вход
 				</h1>
 
-				<input
-					type='text'
-					name='email'
-					placeholder='Email'
-					className='bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition'
-				/>
-				<input
-					type='password'
-					name='password'
-					placeholder='Password'
-					className='bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition'
-				/>
+				<Input type='text' name='email' placeholder='Email' />
+				<Input type='password' name='password' placeholder='Password' />
 
 				<button
 					type='submit'

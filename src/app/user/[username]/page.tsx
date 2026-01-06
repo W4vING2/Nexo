@@ -1,44 +1,16 @@
-import prisma from '@/../lib/prisma'
 import BackButton from '@/components/ui/BackButton'
+import Button from '@/components/ui/Button'
+import Post from '@/components/ui/Post'
+import type { PageProps } from '@/types/post.types'
+import getAll from '@/utils/user/getAll'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-
-interface PageProps {
-	params: Promise<{
-		username: string
-	}>
-}
-
-interface Post {
-	id: number
-	content: string
-	createdAt: Date
-}
 
 export default async function UserProfilePage({ params }: PageProps) {
 	const { username } = await params
 
-	const user = await prisma.user.findUnique({
-		where: { username },
-		select: {
-			username: true,
-			name: true,
-			bio: true,
-			avatarUrl: true,
-			posts: {
-				orderBy: { createdAt: 'desc' },
-				select: {
-					id: true,
-					content: true,
-					createdAt: true,
-				},
-			},
-		},
-	})
-
-	if (!user) {
-		notFound()
-	}
+	const user = await getAll(username)
+	if (!user) notFound()
 
 	return (
 		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
@@ -46,7 +18,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 				<div className='w-24 h-24 rounded-full bg-gray-700 overflow-hidden'>
 					<Image
 						src={user.avatarUrl || '/logo.png'}
-						alt=''
+						alt='avatar'
 						width={96}
 						height={96}
 						className='w-full h-full object-cover'
@@ -62,9 +34,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 
 				<BackButton />
 
-				<button className='mt-2 px-6 py-2 bg-linear-to-r from-blue-500 to-purple-600 text-black font-semibold rounded-full hover:from-purple-600 hover:to-blue-500 transition w-max'>
-					Написать
-				</button>
+				<Button text='Написать' />
 			</div>
 
 			<div className='max-w-xl mx-auto px-4 py-4 flex flex-col gap-4'>
@@ -73,16 +43,16 @@ export default async function UserProfilePage({ params }: PageProps) {
 				{user.posts.length === 0 ? (
 					<p className='text-gray-400 text-sm'>Постов пока нет</p>
 				) : (
-					user.posts.map((post: Post) => (
-						<div
+					user.posts.map(post => (
+						<Post
 							key={post.id}
-							className='bg-gray-800/60 p-4 rounded-2xl text-sm'
-						>
-							<p>{post.content}</p>
-							<p className='mt-2 text-xs text-gray-500'>
-								{new Date(post.createdAt).toLocaleString()}
-							</p>
-						</div>
+							id={post.id}
+							user={user.username || 'Неизвестный'}
+							text={post.content}
+							likes={post.likes}
+							dislikes={post.dislikes}
+							createdAt={post.createdAt.toISOString()}
+						/>
 					))
 				)}
 			</div>

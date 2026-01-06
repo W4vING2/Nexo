@@ -1,17 +1,12 @@
 'use client'
 
 import nexoStore from '@/store/nexoStore'
+import type { User } from '@/types/user.types'
 import { searchUsersByUsername } from '@/utils/searchUser'
 import { Search as SearchIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-
-interface User {
-	id: number
-	username: string | null
-	avatarUrl: string | null
-}
 
 export default function Search() {
 	const { user: currentUser } = nexoStore()
