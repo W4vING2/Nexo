@@ -1,10 +1,10 @@
 'use client'
 
 import nexoStore from '@/store/nexoStore'
-import Chat from '../Chat'
-import Home from '../Home'
-import Profile from '../Profile'
-import Search from '../Search'
+import Chat from './sections/Chat'
+import Home from './sections/Home'
+import Profile from './sections/Profile'
+import Search from './sections/Search'
 
 export default function Main() {
 	const { selectedPage } = nexoStore()

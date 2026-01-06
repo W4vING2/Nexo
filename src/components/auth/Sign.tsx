@@ -3,7 +3,7 @@
 import nexoStore from '@/store/nexoStore'
 import { registerUser } from '@/utils/registerUser'
 import Link from 'next/link'
-import Input from './ui/Input'
+import Input from '../ui/Input'
 
 export default function Register() {
 	const { setIsLogged, setUser } = nexoStore()

@@ -1,11 +1,11 @@
 'use client'
 
-import FooterBar from '@/components/ui/FooterBar'
-import Header from '@/components/ui/Header'
-import Main from '@/components/ui/Main'
+import FooterBar from '@/components/FooterBar'
+import Header from '@/components/Header'
+import Main from '@/components/Main'
 import nexoStore from '@/store/nexoStore'
 import { useEffect } from 'react'
-import Sign from '../components/Sign'
+import Sign from '../components/auth/Sign'
 
 export default function HomePage() {
 	const { isLogged, setIsLogged, setUser } = nexoStore()

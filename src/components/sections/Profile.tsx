@@ -5,7 +5,7 @@ import nexoStore from '@/store/nexoStore'
 import type { Post as PostType } from '@/types/post.types'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import ProfileEditModal from './ui/ProfileEdit'
+import ProfileEditModal from '../ui/ProfileEdit'
 
 export default function Profile() {
 	const { user, setIsLogged, setUser } = nexoStore()
