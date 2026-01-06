@@ -1,5 +1,9 @@
 export interface PostProps {
 	avatar?: string
-	text: string
 	user: string
+	text: string
+	createdAt?: string
+	id: number
+	likes?: number
+	dislikes?: number
 }

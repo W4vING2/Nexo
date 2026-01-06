@@ -9,6 +9,8 @@ export async function GET() {
 				id: true,
 				content: true,
 				createdAt: true,
+				likes: true,
+				dislikes: true,
 				author: {
 					select: {
 						id: true,
@@ -18,10 +20,9 @@ export async function GET() {
 				},
 			},
 		})
-
-		return NextResponse.json(posts)
+		return NextResponse.json({ posts })
 	} catch (err) {
 		console.error('GET /api/posts/all error:', err)
-		return NextResponse.json([], { status: 500 })
+		return NextResponse.json({ posts: [] }, { status: 500 })
 	}
 }
