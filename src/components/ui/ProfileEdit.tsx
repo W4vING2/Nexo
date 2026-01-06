@@ -25,7 +25,7 @@ export default function ProfileEditModal() {
 
 			setUser({
 				...user,
-				name: updated.name,
+				name: updated.name ?? '',
 				username: updated.username ?? '',
 				bio: updated.bio ?? '',
 				avatarUrl: updated.avatarUrl ?? '',
