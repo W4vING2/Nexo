@@ -10,4 +10,5 @@
  */
 export type * from './models/User'
 export type * from './models/Post'
+export type * from './models/PostReaction'
 export type * from './commonInputTypes'

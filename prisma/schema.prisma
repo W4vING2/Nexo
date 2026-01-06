@@ -17,7 +17,8 @@ model User {
   avatarUrl String?
   createdAt DateTime @default(now())
 
-  posts Post[]
+  posts     Post[]
+  reactions PostReaction[]
 }
 
 model Post {
@@ -28,7 +29,20 @@ model Post {
   likes     Int      @default(0)
   dislikes  Int      @default(0)
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reactions PostReaction[]
 
   @@index([authorId])
+}
+
+model PostReaction {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  postId Int
+  type   String
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
 }

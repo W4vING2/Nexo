@@ -1,7 +1,8 @@
 'use client'
 
+import nexoStore from '@/store/nexoStore'
 import { PostProps } from '@/types/post.types'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Post({
 	user,
@@ -11,15 +12,31 @@ export default function Post({
 	id,
 	createdAt,
 }: PostProps) {
+	const { user: currentUser } = nexoStore()
 	const [likeCount, setLikeCount] = useState(likes)
 	const [dislikeCount, setDislikeCount] = useState(dislikes)
 	const [userReaction, setUserReaction] = useState<'like' | 'dislike' | null>(
 		null
 	)
 
+	useEffect(() => {
+		const fetchReaction = async () => {
+			if (!id || !currentUser?.id) return
+			try {
+				const res = await fetch(
+					`/api/posts/${id}/reaction?userId=${currentUser.id}`
+				)
+				const data = await res.json()
+				if (res.ok && data.type) setUserReaction(data.type)
+			} catch (err) {
+				console.error('Ошибка получения реакции:', err)
+			}
+		}
+		fetchReaction()
+	}, [id, currentUser?.id])
+
 	function timeAgo(date: string) {
 		const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-
 		const intervals = [
 			{ label: 'y', seconds: 31536000 },
 			{ label: 'mo', seconds: 2592000 },
@@ -27,38 +44,32 @@ export default function Post({
 			{ label: 'h', seconds: 3600 },
 			{ label: 'm', seconds: 60 },
 		]
-
 		for (const i of intervals) {
 			const count = Math.floor(seconds / i.seconds)
 			if (count >= 1) return `${count}${i.label}`
 		}
-
 		return 'now'
 	}
 
-	const handleLike = async () => {
-		if (!id || userReaction === 'like') return
-		try {
-			const res = await fetch(`/api/posts/${id}/like`, { method: 'PATCH' })
-			const data = await res.json()
-			if (!res.ok) throw new Error(data.error || 'Ошибка лайка')
-			setLikeCount(data.likes)
-			if (userReaction === 'dislike') setDislikeCount(prev => prev - 1)
-			setUserReaction('like')
-		} catch (err) {
-			console.error(err)
-		}
-	}
+	const react = async (type: 'like' | 'dislike') => {
+		if (!id || !currentUser?.id) return
+		if (userReaction === type) return
 
-	const handleDislike = async () => {
-		if (!id || userReaction === 'dislike') return
 		try {
-			const res = await fetch(`/api/posts/${id}/dislike`, { method: 'PATCH' })
+			const res = await fetch(`/api/posts/${id}/react`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+					'x-user-id': currentUser.id.toString(),
+				},
+				body: JSON.stringify({ type }),
+			})
 			const data = await res.json()
-			if (!res.ok) throw new Error(data.error || 'Ошибка дизлайка')
+			if (!res.ok) throw new Error(data.error || 'Ошибка реакции')
+
+			setLikeCount(data.likes)
 			setDislikeCount(data.dislikes)
-			if (userReaction === 'like') setLikeCount(prev => prev - 1)
-			setUserReaction('dislike')
+			setUserReaction(type)
 		} catch (err) {
 			console.error(err)
 		}
@@ -75,10 +86,9 @@ export default function Post({
 					</span>
 				</div>
 				<p className='text-gray-200 text-sm leading-relaxed'>{text}</p>
-
 				<div className='flex gap-4 mt-2'>
 					<button
-						onClick={handleLike}
+						onClick={() => react('like')}
 						className={`text-sm px-2 py-1 rounded hover:bg-gray-700 transition ${
 							userReaction === 'like'
 								? 'bg-blue-600 text-white'
@@ -88,7 +98,7 @@ export default function Post({
 						👍 {likeCount}
 					</button>
 					<button
-						onClick={handleDislike}
+						onClick={() => react('dislike')}
 						className={`text-sm px-2 py-1 rounded hover:bg-gray-700 transition ${
 							userReaction === 'dislike'
 								? 'bg-red-600 text-white'
