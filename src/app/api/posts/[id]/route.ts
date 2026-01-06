@@ -3,22 +3,25 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function DELETE(
 	req: NextRequest,
-	{ params }: { params: { id: string } }
+	context: { params: Promise<{ id: string }> }
 ) {
 	try {
-		const postId = Number(params.id)
+		const { id } = await context.params
 
-		if (!postId) {
-			return NextResponse.json({ error: 'Invalid post id' }, { status: 400 })
+		if (!id) {
+			return NextResponse.json(
+				{ error: 'Post id is required' },
+				{ status: 400 }
+			)
 		}
 
 		await prisma.post.delete({
-			where: { id: postId },
+			where: { id: Number(id) },
 		})
 
 		return NextResponse.json({ success: true })
 	} catch (err) {
-		console.error('Ошибка при удалении поста:', err)
+		console.error(err)
 		return NextResponse.json(
 			{ error: 'Failed to delete post' },
 			{ status: 500 }
