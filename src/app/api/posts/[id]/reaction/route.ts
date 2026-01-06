@@ -10,21 +10,31 @@ export async function GET(req: NextRequest, { params }: Params) {
 	const postId = Number(id)
 	const userId = Number(req.nextUrl.searchParams.get('userId'))
 
-	if (!Number.isInteger(postId)) {
+	if (!Number.isInteger(postId))
 		return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 })
-	}
-	if (!userId) {
+	if (!userId)
 		return NextResponse.json({ error: 'User ID not provided' }, { status: 400 })
-	}
 
 	try {
+		const post = await prisma.post.findUnique({
+			where: { id: postId },
+			select: { likes: true, dislikes: true },
+		})
+		if (!post)
+			return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+
 		const reaction = await prisma.postReaction.findUnique({
 			where: { userId_postId: { userId, postId } },
+			select: { type: true },
 		})
 
-		return NextResponse.json({ type: reaction?.type ?? null })
+		return NextResponse.json({
+			likes: post.likes,
+			dislikes: post.dislikes,
+			type: reaction?.type ?? null,
+		})
 	} catch (err) {
-		console.error('Ошибка получения реакции:', err)
+		console.error(err)
 		return NextResponse.json({ error: 'DB error' }, { status: 500 })
 	}
 }

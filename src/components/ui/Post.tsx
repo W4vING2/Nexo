@@ -20,18 +20,23 @@ export default function Post({
 	)
 
 	useEffect(() => {
+		if (!id || !currentUser?.id) return
+
 		const fetchReaction = async () => {
-			if (!id || !currentUser?.id) return
 			try {
 				const res = await fetch(
 					`/api/posts/${id}/reaction?userId=${currentUser.id}`
 				)
+				if (!res.ok) throw new Error('Ошибка получения реакции')
 				const data = await res.json()
-				if (res.ok && data.type) setUserReaction(data.type)
+				setLikeCount(data.likes)
+				setDislikeCount(data.dislikes)
+				setUserReaction(data.type)
 			} catch (err) {
-				console.error('Ошибка получения реакции:', err)
+				console.error(err)
 			}
 		}
+
 		fetchReaction()
 	}, [id, currentUser?.id])
 

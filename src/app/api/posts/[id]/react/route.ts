@@ -10,72 +10,67 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 	const postId = Number(id)
 	const userId = Number(req.headers.get('x-user-id'))
 
-	if (!Number.isInteger(postId)) {
+	if (!Number.isInteger(postId))
 		return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 })
-	}
-	if (!userId) {
+	if (!userId)
 		return NextResponse.json({ error: 'User ID not provided' }, { status: 400 })
-	}
 
 	const body = await req.json()
-	const type: 'like' | 'dislike' = body.type
+	const type = body.type as 'like' | 'dislike'
 
-	if (!['like', 'dislike'].includes(type)) {
-		return NextResponse.json(
-			{ error: 'Invalid reaction type' },
-			{ status: 400 }
-		)
-	}
+	if (!['like', 'dislike'].includes(type))
+		return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
 
 	try {
 		const existing = await prisma.postReaction.findUnique({
 			where: { userId_postId: { userId, postId } },
 		})
 
-		if (existing) {
-			if (existing.type === type) {
-				// Если пользователь уже поставил эту же реакцию, ничего не делаем
-				return NextResponse.json(
-					{ error: 'Вы уже ставили эту реакцию' },
-					{ status: 400 }
-				)
-			}
-
-			// Меняем реакцию
-			await prisma.postReaction.update({
-				where: { userId_postId: { userId, postId } },
-				data: { type },
-			})
-
+		if (!existing) {
+			await prisma.postReaction.create({ data: { userId, postId, type } })
 			const post = await prisma.post.update({
 				where: { id: postId },
 				data:
 					type === 'like'
-						? { likes: { increment: 1 }, dislikes: { decrement: 1 } }
-						: { likes: { decrement: 1 }, dislikes: { increment: 1 } },
-				select: { id: true, likes: true, dislikes: true },
+						? { likes: { increment: 1 } }
+						: { dislikes: { increment: 1 } },
+				select: { likes: true, dislikes: true },
 			})
-
 			return NextResponse.json(post)
 		}
 
-		// Если реакции ещё не было
-		await prisma.postReaction.create({
-			data: { userId, postId, type },
+		if (existing.type === type) {
+			await prisma.postReaction.delete({
+				where: { userId_postId: { userId, postId } },
+			})
+			const post = await prisma.post.update({
+				where: { id: postId },
+				data:
+					type === 'like'
+						? { likes: { decrement: 1 } }
+						: { dislikes: { decrement: 1 } },
+				select: { likes: true, dislikes: true },
+			})
+			return NextResponse.json(post)
+		}
+
+		await prisma.postReaction.update({
+			where: { userId_postId: { userId, postId } },
+			data: { type },
 		})
 
 		const post = await prisma.post.update({
 			where: { id: postId },
 			data:
 				type === 'like'
-					? { likes: { increment: 1 } }
-					: { dislikes: { increment: 1 } },
-			select: { id: true, likes: true, dislikes: true },
+					? { likes: { increment: 1 }, dislikes: { decrement: 1 } }
+					: { dislikes: { increment: 1 }, likes: { decrement: 1 } },
+			select: { likes: true, dislikes: true },
 		})
 
 		return NextResponse.json(post)
 	} catch (err) {
-		console.error('Ошибка реакции:', err)
+		console.error(err)
 		return NextResponse.json({ error: 'DB error' }, { status: 500 })
 	}
 }
