@@ -1,0 +1,27 @@
+import prisma from '@/../lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(_: NextRequest) {
+	try {
+		const posts = await prisma.post.findMany({
+			orderBy: { createdAt: 'desc' },
+			select: {
+				id: true,
+				content: true,
+				createdAt: true,
+				author: {
+					select: {
+						id: true,
+						username: true,
+						avatarUrl: true,
+					},
+				},
+			},
+		})
+
+		return NextResponse.json(posts)
+	} catch (err) {
+		console.error('GET /api/posts/all error:', err)
+		return NextResponse.json([], { status: 500 })
+	}
+}

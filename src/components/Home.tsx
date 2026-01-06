@@ -1,29 +1,56 @@
 'use client'
 
 import Post from '@/components/ui/Post'
+import { useEffect, useState } from 'react'
+
+interface PostType {
+	id: number
+	content: string
+	createdAt: string
+	author: {
+		id: number
+		username: string | null
+		avatarUrl: string | null
+	}
+}
 
 export default function Home() {
-	const posts = [
-		{
-			user: 'user1',
-			text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod.',
-		},
-		{
-			user: 'user2',
-			text: 'Another example post with more text to show how it looks when it is longer.',
-		},
-		{ user: 'user3', text: 'Short post' },
-		{
-			user: 'user4',
-			text: 'Here is a longer post to demonstrate height adjustment and line wrapping. It should look like a real tweet.',
-		},
-		{ user: 'user5', text: 'Final example post for testing.' },
-	]
+	const [posts, setPosts] = useState<PostType[]>([])
+	const [loading, setLoading] = useState(true)
+
+	useEffect(() => {
+		const loadPosts = async () => {
+			try {
+				const res = await fetch('/api/posts/all')
+				const data = await res.json()
+				setPosts(data)
+			} catch (err) {
+				console.error('Failed to load posts', err)
+			} finally {
+				setLoading(false)
+			}
+		}
+
+		loadPosts()
+	}, [])
+
+	if (loading) {
+		return (
+			<main className='min-h-screen flex items-center justify-center text-gray-400'>
+				Загрузка...
+			</main>
+		)
+	}
 
 	return (
 		<main className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white flex flex-col gap-4 py-4 px-4'>
-			{posts.map((post, idx) => (
-				<Post key={idx} user={post.user} text={post.text} />
+			{posts.map(post => (
+				<Post
+					key={post.id}
+					avatar={post.author.avatarUrl || undefined}
+					text={post.content}
+					user={post.author.username || 'Неизвестный пользователь'}
+				/>
 			))}
 		</main>
 	)

@@ -17,7 +17,6 @@ export default function Profile() {
 	const [loading, setLoading] = useState(false)
 	const [content, setContent] = useState('')
 
-	// Загружаем все посты пользователя при монтировании
 	useEffect(() => {
 		if (!user?.id) return
 		fetch(`/api/posts?userId=${user.id}`)
@@ -45,6 +44,23 @@ export default function Profile() {
 			alert('Ошибка при создании поста')
 		} finally {
 			setLoading(false)
+		}
+	}
+
+	const onDeletePost = async (postId: number) => {
+		if (!confirm('Удалить пост?')) return
+
+		try {
+			const res = await fetch(`/api/posts/${postId}`, {
+				method: 'DELETE',
+			})
+
+			if (!res.ok) throw new Error('Ошибка удаления')
+
+			setPosts(prev => prev.filter(p => p.id !== postId))
+		} catch (err) {
+			console.error(err)
+			alert('Не удалось удалить пост')
 		}
 	}
 
@@ -113,9 +129,17 @@ export default function Profile() {
 						posts.map(post => (
 							<div
 								key={post.id}
-								className='bg-gray-800/60 p-4 rounded-2xl text-sm'
+								className='bg-gray-800/60 p-4 rounded-2xl text-sm relative'
 							>
+								<button
+									onClick={() => onDeletePost(post.id)}
+									className='absolute top-2 right-2 text-xs text-red-400 hover:text-red-300 transition'
+								>
+									Удалить
+								</button>
+
 								<p>{post.content}</p>
+
 								<p className='mt-2 text-xs text-gray-500'>
 									{new Date(post.createdAt).toLocaleString()}
 								</p>
