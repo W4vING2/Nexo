@@ -5,6 +5,7 @@ import nexoStore from '@/store/nexoStore'
 import type { Post as PostType } from '@/types/post.types'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import FriendCard from '../ui/FriendCard'
 import ProfileEditModal from '../ui/ProfileEdit'
 
 interface Friend {
@@ -133,22 +134,7 @@ export default function Profile() {
 						{friends.length === 0 ? (
 							<p className='text-gray-400'>Нет друзей</p>
 						) : (
-							friends.map(f => (
-								<div key={f.id} className='flex flex-col items-center w-20'>
-									<div className='w-16 h-16 rounded-full bg-gray-700 overflow-hidden'>
-										{f.avatarUrl && (
-											<Image
-												src={f.avatarUrl}
-												alt={f.username}
-												width={64}
-												height={64}
-												className='w-full h-full object-cover'
-											/>
-										)}
-									</div>
-									<p className='text-xs mt-1 truncate'>@{f.username}</p>
-								</div>
-							))
+							friends.map(f => <FriendCard key={f.id} friend={f} />)
 						)}
 					</div>
 

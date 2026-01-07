@@ -2,6 +2,7 @@
 
 import nexoStore from '@/store/nexoStore'
 import { PostProps } from '@/types/post.types'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 export default function Post({
@@ -82,7 +83,15 @@ export default function Post({
 
 	return (
 		<div className='flex p-5 gap-4 border-b border-gray-800 hover:bg-zinc-900 transition w-[95%] mx-auto rounded-xl'>
-			<div className='w-12 h-12 rounded-full bg-zinc-700 shrink-0' />
+			<div className='w-12 h-12 rounded-full bg-zinc-700 shrink-0'>
+				<Image
+					src={currentUser?.avatarUrl || '/logo.png'}
+					alt={user}
+					width={48}
+					height={48}
+					className='w-full h-full object-cover'
+				/>
+			</div>
 			<div className='flex flex-col gap-2 w-full'>
 				<div className='flex items-center justify-between'>
 					<h1 className='font-bold text-white text-sm'>{user}</h1>

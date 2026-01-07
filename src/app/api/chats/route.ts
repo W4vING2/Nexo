@@ -1,28 +1,39 @@
 import prisma from '@/../lib/prisma'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function GET(req: NextRequest) {
-	const userId = Number(req.nextUrl.searchParams.get('userId'))
-
-	if (!userId) {
-		return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-	}
-
+export async function POST(req: Request) {
 	try {
-		// Получаем все чаты, где есть этот пользователь
-		const chats = await prisma.chatUser.findMany({
-			where: { userId },
-			include: { chat: true },
+		const { userIds } = await req.json()
+
+		if (!Array.isArray(userIds) || userIds.length < 2) {
+			return NextResponse.json(
+				{ error: 'At least 2 users required' },
+				{ status: 400 }
+			)
+		}
+
+		// Проверяем всех пользователей
+		const usersExist = await prisma.user.count({
+			where: { id: { in: userIds } },
+		})
+		if (usersExist !== userIds.length) {
+			return NextResponse.json(
+				{ error: 'Some users not found' },
+				{ status: 400 }
+			)
+		}
+
+		// Создаём чат и связи с пользователями
+		const chat = await prisma.chat.create({
+			data: {
+				users: { create: userIds.map(id => ({ userId: id })) },
+			},
+			include: { users: { select: { userId: true } } },
 		})
 
-		const formattedChats = chats.map(c => ({
-			id: c.chat.id,
-			title: `Чат #${c.chat.id}`,
-		}))
-
-		return NextResponse.json({ chats: formattedChats })
+		return NextResponse.json(chat)
 	} catch (err) {
-		console.error(err)
-		return NextResponse.json({ error: 'DB error' }, { status: 500 })
+		console.error('POST /api/chats error:', err)
+		return NextResponse.json({ error: 'Server error' }, { status: 500 })
 	}
 }

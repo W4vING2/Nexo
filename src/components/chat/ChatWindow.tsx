@@ -53,7 +53,7 @@ export default function ChatWindow({ chat, onBack }: Props) {
 	}
 
 	return (
-		<div className='flex flex-col h-screen'>
+		<div className='flex flex-col h-[88vh]'>
 			<div className='flex items-center gap-3 p-4 border-b border-gray-800'>
 				<button onClick={onBack} className='text-blue-500'>
 					←
