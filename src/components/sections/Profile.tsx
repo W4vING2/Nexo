@@ -7,17 +7,45 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import ProfileEditModal from '../ui/ProfileEdit'
 
+interface Friend {
+	id: number
+	username: string
+	avatarUrl?: string
+}
+
+interface FriendRequest {
+	id: number
+	fromUser: {
+		id: number
+		username: string
+		avatarUrl?: string
+	}
+}
+
 export default function Profile() {
 	const { user, setIsLogged, setUser } = nexoStore()
 	const [posts, setPosts] = useState<PostType[]>([])
+	const [friends, setFriends] = useState<Friend[]>([])
+	const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([])
 	const [content, setContent] = useState('')
 	const [loading, setLoading] = useState(false)
 
 	useEffect(() => {
 		if (!user?.id) return
+
 		fetch(`/api/posts?userId=${user.id}`)
 			.then(res => res.json())
 			.then(data => setPosts(data.posts ?? []))
+			.catch(console.error)
+
+		fetch(`/api/friends?userId=${user.id}`)
+			.then(res => res.json())
+			.then(data => setFriends(data.friends ?? []))
+			.catch(console.error)
+
+		fetch(`/api/friends/request?userId=${user.id}`)
+			.then(res => res.json())
+			.then(data => setFriendRequests(data.requests ?? []))
 			.catch(console.error)
 	}, [user?.id])
 
@@ -38,6 +66,31 @@ export default function Profile() {
 		}
 	}
 
+	const handleFriendRequest = async (requestId: number, accept: boolean) => {
+		try {
+			const res = await fetch(`/api/friends/request/${requestId}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ accept }),
+			})
+
+			if (!res.ok) {
+				const error = await res.json()
+				console.error('Friend request error:', error)
+				return
+			}
+
+			setFriendRequests(prev => prev.filter(r => r.id !== requestId))
+			if (accept) {
+				fetch(`/api/friends?userId=${user?.id}`)
+					.then(res => res.json())
+					.then(data => setFriends(data.friends ?? []))
+			}
+		} catch (err) {
+			console.error(err)
+		}
+	}
+
 	if (!user)
 		return (
 			<p className='text-center text-gray-400 min-h-screen flex items-center justify-center'>
@@ -46,8 +99,8 @@ export default function Profile() {
 		)
 
 	return (
-		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
-			<div className='relative h-40 bg-gray-800'>
+		<div className='flex flex-col h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
+			<div className='relative h-40 bg-gray-800 shrink-0'>
 				<div className='absolute -bottom-12 left-4'>
 					<Image
 						src={user.avatarUrl || '/logo.png'}
@@ -59,7 +112,7 @@ export default function Profile() {
 				</div>
 			</div>
 
-			<div className='pt-16 px-4 max-w-xl mx-auto'>
+			<div className='flex-1 overflow-y-auto pt-16 px-4 w-screen mx-auto'>
 				<div className='flex justify-between items-start'>
 					<div>
 						<h1 className='text-2xl font-bold'>{user.name}</h1>
@@ -73,6 +126,73 @@ export default function Profile() {
 						{user.bio}
 					</p>
 				)}
+
+				<div className='mt-6'>
+					<h2 className='text-lg font-bold mb-2'>Друзья</h2>
+					<div className='flex flex-wrap gap-3 mb-4'>
+						{friends.length === 0 ? (
+							<p className='text-gray-400'>Нет друзей</p>
+						) : (
+							friends.map(f => (
+								<div key={f.id} className='flex flex-col items-center w-20'>
+									<div className='w-16 h-16 rounded-full bg-gray-700 overflow-hidden'>
+										{f.avatarUrl && (
+											<Image
+												src={f.avatarUrl}
+												alt={f.username}
+												width={64}
+												height={64}
+												className='w-full h-full object-cover'
+											/>
+										)}
+									</div>
+									<p className='text-xs mt-1 truncate'>@{f.username}</p>
+								</div>
+							))
+						)}
+					</div>
+
+					{friendRequests.length > 0 && (
+						<div className='bg-gray-800 p-3 rounded-xl mb-4'>
+							<h3 className='font-medium mb-2'>Заявки в друзья</h3>
+							<div className='flex flex-col gap-2'>
+								{friendRequests.map(req => (
+									<div
+										key={req.id}
+										className='flex items-center justify-between bg-gray-900 p-2 rounded-xl'
+									>
+										<div className='flex items-center gap-2'>
+											{req.fromUser.avatarUrl && (
+												<Image
+													src={req.fromUser.avatarUrl}
+													width={32}
+													height={32}
+													alt={req.fromUser.username}
+													className='rounded-full object-cover'
+												/>
+											)}
+											<p className='text-sm'>@{req.fromUser.username}</p>
+										</div>
+										<div className='flex gap-2'>
+											<button
+												onClick={() => handleFriendRequest(req.id, true)}
+												className='px-2 py-1 bg-blue-600 rounded-full text-xs'
+											>
+												Принять
+											</button>
+											<button
+												onClick={() => handleFriendRequest(req.id, false)}
+												className='px-2 py-1 bg-red-600 rounded-full text-xs'
+											>
+												Отклонить
+											</button>
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+				</div>
 
 				<div className='mt-6 bg-gray-900 p-4 rounded-xl'>
 					<textarea
@@ -111,16 +231,18 @@ export default function Profile() {
 					)}
 				</div>
 
-				<button
-					onClick={() => {
-						localStorage.removeItem('user')
-						setUser(null)
-						setIsLogged(false)
-					}}
-					className='mt-6 w-full border border-red-500 text-red-400 rounded-full py-2'
-				>
-					Выйти
-				</button>
+				<div className='mt-6 mb-6'>
+					<button
+						onClick={() => {
+							localStorage.removeItem('user')
+							setUser(null)
+							setIsLogged(false)
+						}}
+						className='w-full border border-red-500 text-red-400 rounded-full py-2'
+					>
+						Выйти
+					</button>
+				</div>
 			</div>
 		</div>
 	)

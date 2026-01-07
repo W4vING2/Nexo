@@ -18,6 +18,7 @@ export async function registerUser(formData: FormData) {
 			password: hashedPassword,
 			username,
 			name: username,
+			bio: '',
 		},
 		select: {
 			id: true,

@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.2.0",
   "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../app/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id        Int      @id @default(autoincrement())\n  email     String   @unique\n  name      String?\n  password  String\n  bio       String?\n  username  String?  @unique\n  avatarUrl String?\n  createdAt DateTime @default(now())\n\n  posts     Post[]\n  reactions PostReaction[]\n}\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  content   String\n  authorId  Int\n  createdAt DateTime @default(now())\n  likes     Int      @default(0)\n  dislikes  Int      @default(0)\n\n  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)\n  reactions PostReaction[]\n\n  @@index([authorId])\n}\n\nmodel PostReaction {\n  id     Int    @id @default(autoincrement())\n  userId Int\n  postId Int\n  type   String\n\n  user User @relation(fields: [userId], references: [id])\n  post Post @relation(fields: [postId], references: [id])\n\n  @@unique([userId, postId])\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../app/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id        Int      @id @default(autoincrement())\n  email     String   @unique\n  name      String?\n  password  String\n  bio       String?\n  username  String?  @unique\n  avatarUrl String?\n  createdAt DateTime @default(now())\n\n  posts     Post[]\n  reactions PostReaction[]\n\n  sentRequests     FriendRequest[] @relation(\"FriendRequestsSent\")\n  receivedRequests FriendRequest[] @relation(\"FriendRequestsReceived\")\n\n  friends   Friend[] @relation(\"UserFriends\")\n  friendsOf Friend[] @relation(\"FriendUsers\")\n\n  chats    ChatUser[]\n  messages Message[]\n}\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  content   String\n  authorId  Int\n  createdAt DateTime @default(now())\n  likes     Int      @default(0)\n  dislikes  Int      @default(0)\n\n  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)\n  reactions PostReaction[]\n\n  @@index([authorId])\n}\n\nmodel PostReaction {\n  id     Int    @id @default(autoincrement())\n  userId Int\n  postId Int\n  type   String\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, postId])\n}\n\nmodel FriendRequest {\n  id         Int      @id @default(autoincrement())\n  fromUserId Int\n  toUserId   Int\n  createdAt  DateTime @default(now())\n\n  fromUser User @relation(\"FriendRequestsSent\", fields: [fromUserId], references: [id], onDelete: Cascade)\n  toUser   User @relation(\"FriendRequestsReceived\", fields: [toUserId], references: [id], onDelete: Cascade)\n\n  @@unique([fromUserId, toUserId])\n}\n\nmodel Friend {\n  id        Int      @id @default(autoincrement())\n  userId    Int\n  friendId  Int\n  createdAt DateTime @default(now())\n\n  user   User @relation(\"UserFriends\", fields: [userId], references: [id], onDelete: Cascade)\n  friend User @relation(\"FriendUsers\", fields: [friendId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, friendId])\n}\n\nmodel Chat {\n  id        Int      @id @default(autoincrement())\n  createdAt DateTime @default(now())\n\n  users    ChatUser[]\n  messages Message[]\n}\n\nmodel ChatUser {\n  id     Int @id @default(autoincrement())\n  chatId Int\n  userId Int\n\n  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([chatId, userId])\n}\n\nmodel Message {\n  id        Int      @id @default(autoincrement())\n  chatId    Int\n  userId    Int\n  text      String\n  createdAt DateTime @default(now())\n\n  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bio\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"posts\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToUser\"},{\"name\":\"reactions\",\"kind\":\"object\",\"type\":\"PostReaction\",\"relationName\":\"PostReactionToUser\"}],\"dbName\":null},\"Post\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"likes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"dislikes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostToUser\"},{\"name\":\"reactions\",\"kind\":\"object\",\"type\":\"PostReaction\",\"relationName\":\"PostToPostReaction\"}],\"dbName\":null},\"PostReaction\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"postId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostReactionToUser\"},{\"name\":\"post\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToPostReaction\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bio\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"posts\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToUser\"},{\"name\":\"reactions\",\"kind\":\"object\",\"type\":\"PostReaction\",\"relationName\":\"PostReactionToUser\"},{\"name\":\"sentRequests\",\"kind\":\"object\",\"type\":\"FriendRequest\",\"relationName\":\"FriendRequestsSent\"},{\"name\":\"receivedRequests\",\"kind\":\"object\",\"type\":\"FriendRequest\",\"relationName\":\"FriendRequestsReceived\"},{\"name\":\"friends\",\"kind\":\"object\",\"type\":\"Friend\",\"relationName\":\"UserFriends\"},{\"name\":\"friendsOf\",\"kind\":\"object\",\"type\":\"Friend\",\"relationName\":\"FriendUsers\"},{\"name\":\"chats\",\"kind\":\"object\",\"type\":\"ChatUser\",\"relationName\":\"ChatUserToUser\"},{\"name\":\"messages\",\"kind\":\"object\",\"type\":\"Message\",\"relationName\":\"MessageToUser\"}],\"dbName\":null},\"Post\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"likes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"dislikes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostToUser\"},{\"name\":\"reactions\",\"kind\":\"object\",\"type\":\"PostReaction\",\"relationName\":\"PostToPostReaction\"}],\"dbName\":null},\"PostReaction\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"postId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostReactionToUser\"},{\"name\":\"post\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToPostReaction\"}],\"dbName\":null},\"FriendRequest\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"fromUserId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"toUserId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"fromUser\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FriendRequestsSent\"},{\"name\":\"toUser\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FriendRequestsReceived\"}],\"dbName\":null},\"Friend\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"friendId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserFriends\"},{\"name\":\"friend\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FriendUsers\"}],\"dbName\":null},\"Chat\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"ChatUser\",\"relationName\":\"ChatToChatUser\"},{\"name\":\"messages\",\"kind\":\"object\",\"type\":\"Message\",\"relationName\":\"ChatToMessage\"}],\"dbName\":null},\"ChatUser\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"chatId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"chat\",\"kind\":\"object\",\"type\":\"Chat\",\"relationName\":\"ChatToChatUser\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ChatUserToUser\"}],\"dbName\":null},\"Message\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"chatId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"text\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"chat\",\"kind\":\"object\",\"type\":\"Chat\",\"relationName\":\"ChatToMessage\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"MessageToUser\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -203,6 +203,56 @@ export interface PrismaClient<
     * ```
     */
   get postReaction(): Prisma.PostReactionDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.friendRequest`: Exposes CRUD operations for the **FriendRequest** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more FriendRequests
+    * const friendRequests = await prisma.friendRequest.findMany()
+    * ```
+    */
+  get friendRequest(): Prisma.FriendRequestDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.friend`: Exposes CRUD operations for the **Friend** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Friends
+    * const friends = await prisma.friend.findMany()
+    * ```
+    */
+  get friend(): Prisma.FriendDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.chat`: Exposes CRUD operations for the **Chat** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Chats
+    * const chats = await prisma.chat.findMany()
+    * ```
+    */
+  get chat(): Prisma.ChatDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.chatUser`: Exposes CRUD operations for the **ChatUser** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ChatUsers
+    * const chatUsers = await prisma.chatUser.findMany()
+    * ```
+    */
+  get chatUser(): Prisma.ChatUserDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.message`: Exposes CRUD operations for the **Message** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Messages
+    * const messages = await prisma.message.findMany()
+    * ```
+    */
+  get message(): Prisma.MessageDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import nexoStore from '@/store/nexoStore'
+import { useEffect, useState } from 'react'
 import ChatList from '../chat/ChatList'
 import ChatWindow from '../chat/ChatWindow'
 
@@ -9,21 +10,26 @@ interface Chat {
 	title: string
 }
 
-const MOCK_CHATS: Chat[] = [
-	{ id: 1, title: 'H' },
-	{ id: 2, title: 'B' },
-	{ id: 3, title: 'O' },
-]
-
 export default function MobileChat() {
+	const { user } = nexoStore()
+	const [chats, setChats] = useState<Chat[]>([])
 	const [activeChatId, setActiveChatId] = useState<number | null>(null)
 
-	const activeChat = MOCK_CHATS.find(c => c.id === activeChatId) || null
+	const activeChat = chats.find(c => c.id === activeChatId) || null
+
+	useEffect(() => {
+		if (!user?.id) return
+
+		fetch(`/api/chats?userId=${user.id}`)
+			.then(res => res.json())
+			.then(data => setChats(data.chats ?? []))
+			.catch(console.error)
+	}, [user?.id])
 
 	return (
 		<div className='h-screen w-full bg-black text-white'>
 			{activeChatId === null ? (
-				<ChatList chats={MOCK_CHATS} onOpenChat={setActiveChatId} />
+				<ChatList chats={chats} onOpenChat={setActiveChatId} />
 			) : (
 				<ChatWindow chat={activeChat!} onBack={() => setActiveChatId(null)} />
 			)}

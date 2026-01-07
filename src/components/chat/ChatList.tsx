@@ -25,6 +25,9 @@ export default function ChatList({ chats, onOpenChat }: Props) {
 						<p className='font-medium'>{chat.title}</p>
 					</button>
 				))}
+				{chats.length === 0 && (
+					<p className='text-gray-400 p-4'>У вас пока нет чатов</p>
+				)}
 			</div>
 		</div>
 	)

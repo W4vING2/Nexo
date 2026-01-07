@@ -32,3 +32,28 @@ export type Post = Prisma.PostModel
  * 
  */
 export type PostReaction = Prisma.PostReactionModel
+/**
+ * Model FriendRequest
+ * 
+ */
+export type FriendRequest = Prisma.FriendRequestModel
+/**
+ * Model Friend
+ * 
+ */
+export type Friend = Prisma.FriendModel
+/**
+ * Model Chat
+ * 
+ */
+export type Chat = Prisma.ChatModel
+/**
+ * Model ChatUser
+ * 
+ */
+export type ChatUser = Prisma.ChatUserModel
+/**
+ * Model Message
+ * 
+ */
+export type Message = Prisma.MessageModel

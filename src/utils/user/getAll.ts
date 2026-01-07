@@ -4,6 +4,7 @@ export default async function getAll(username: string) {
 	return await prisma.user.findUnique({
 		where: { username },
 		select: {
+			id: true,
 			username: true,
 			name: true,
 			bio: true,

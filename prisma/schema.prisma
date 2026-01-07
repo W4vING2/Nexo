@@ -19,6 +19,15 @@ model User {
 
   posts     Post[]
   reactions PostReaction[]
+
+  sentRequests     FriendRequest[] @relation("FriendRequestsSent")
+  receivedRequests FriendRequest[] @relation("FriendRequestsReceived")
+
+  friends   Friend[] @relation("UserFriends")
+  friendsOf Friend[] @relation("FriendUsers")
+
+  chats    ChatUser[]
+  messages Message[]
 }
 
 model Post {
@@ -41,8 +50,62 @@ model PostReaction {
   postId Int
   type   String
 
-  user User @relation(fields: [userId], references: [id])
-  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+}
+
+model FriendRequest {
+  id         Int      @id @default(autoincrement())
+  fromUserId Int
+  toUserId   Int
+  createdAt  DateTime @default(now())
+
+  fromUser User @relation("FriendRequestsSent", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("FriendRequestsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+}
+
+model Friend {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  friendId  Int
+  createdAt DateTime @default(now())
+
+  user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendUsers", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+}
+
+model Chat {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  users    ChatUser[]
+  messages Message[]
+}
+
+model ChatUser {
+  id     Int @id @default(autoincrement())
+  chatId Int
+  userId Int
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  chatId    Int
+  userId    Int
+  text      String
+  createdAt DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
