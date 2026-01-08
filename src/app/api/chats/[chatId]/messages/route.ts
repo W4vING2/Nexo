@@ -1,43 +1,43 @@
 import prisma from '@/../lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
-type Params = { params: { chatId: string } }
+// App Router динамический маршрут: /api/chats/[chatId]/messages/route.ts
+export async function GET(
+	req: NextRequest,
+	{ params }: { params: Promise<{ chatId: string }> } // params теперь Promise
+) {
+	const resolvedParams = await params
+	const chatId = Number(resolvedParams.chatId)
 
-export async function GET(req: NextRequest, context: Params) {
-	// Разворачиваем Promise
-	const { chatId: chatIdStr } = await context.params
-	const chatId = Number(chatIdStr)
-
-	if (!chatId || chatId <= 0) {
+	if (!Number.isInteger(chatId)) {
 		return NextResponse.json({ error: 'Invalid chatId' }, { status: 400 })
 	}
 
-	try {
-		const messages = await prisma.message.findMany({
-			where: { chatId },
-			orderBy: { createdAt: 'asc' },
-			include: {
-				user: { select: { id: true, username: true, avatarUrl: true } },
-			},
-		})
-		return NextResponse.json(messages ?? [])
-	} catch (err) {
-		console.error('GET /messages error', err)
-		return NextResponse.json([], { status: 200 })
-	}
+	const messages = await prisma.message.findMany({
+		where: { chatId },
+		orderBy: { createdAt: 'asc' },
+		include: {
+			user: { select: { id: true, username: true, avatarUrl: true } },
+		},
+	})
+
+	return NextResponse.json(messages)
 }
 
-export async function POST(req: NextRequest, context: Params) {
-	const { chatId: chatIdStr } = await context.params
-	const chatId = Number(chatIdStr)
+export async function POST(
+	req: NextRequest,
+	{ params }: { params: Promise<{ chatId: string }> }
+) {
+	const resolvedParams = await params
+	const chatId = Number(resolvedParams.chatId)
 	const { userId, text } = await req.json()
 
-	if (!chatId || chatId <= 0 || !userId || !text?.trim()) {
+	if (!Number.isInteger(chatId) || !userId || !text?.trim()) {
 		return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
 	}
 
 	const message = await prisma.message.create({
-		data: { chatId, userId: Number(userId), text },
+		data: { chatId, userId, text },
 		include: {
 			user: { select: { id: true, username: true, avatarUrl: true } },
 		},
