@@ -12,21 +12,18 @@ export default function ProfileEditModal() {
 
 	const onSubmit = async (formData: FormData) => {
 		const name = formData.get('name') as string
-		const username = (formData.get('username') as string) || undefined
 		const bio = (formData.get('bio') as string) || undefined
 
 		try {
 			const updated = await updateUser({
 				email: user.email,
 				name,
-				username,
 				bio,
 			})
 
 			setUser({
 				...user,
 				name: updated.name ?? '',
-				username: updated.username ?? '',
 				bio: updated.bio ?? '',
 				avatarUrl: updated.avatarUrl ?? '',
 			})
@@ -61,12 +58,6 @@ export default function ProfileEditModal() {
 								name='name'
 								defaultValue={user.name}
 								placeholder='Имя'
-								className='bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition'
-							/>
-							<input
-								name='username'
-								defaultValue={user.username || ''}
-								placeholder='Username'
 								className='bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition'
 							/>
 							<textarea

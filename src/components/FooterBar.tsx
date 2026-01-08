@@ -7,11 +7,10 @@ export default function FooterBar() {
 	const { selectedPage, setSelectedPage } = nexoStore()
 
 	return (
-		<footer className='fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-gray-800 sm:hidden'>
-			<ul className='flex justify-around items-center h-14'>
+		<footer className='fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-gray-800 h-14 sm:hidden'>
+			<ul className='flex justify-around items-center h-full'>
 				{bar.map(({ id, icon: Icon }) => {
 					const isActive = selectedPage === id
-
 					return (
 						<li
 							key={id}

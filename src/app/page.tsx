@@ -22,10 +22,12 @@ export default function HomePage() {
 	if (!isLogged) return <Sign />
 
 	return (
-		<>
+		<div className='flex flex-col h-screen'>
 			<Header />
-			<Main />
+			<div className='flex-1 overflow-y-auto'>
+				<Main />
+			</div>
 			<FooterBar />
-		</>
+		</div>
 	)
 }

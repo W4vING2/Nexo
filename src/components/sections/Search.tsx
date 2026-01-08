@@ -56,7 +56,7 @@ export default function Search() {
 	}
 
 	return (
-		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
+		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white pt-14 pb-14'>
 			<div className='sticky top-0 z-40 bg-black/80 backdrop-blur border-b border-gray-800'>
 				<div className='max-w-xl mx-auto px-4 py-2'>
 					<div className='relative'>

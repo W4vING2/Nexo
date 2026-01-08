@@ -95,7 +95,7 @@ export default function MobileChat() {
 	if (loading) return <p className='p-4 text-gray-400'>Загрузка друзей...</p>
 
 	return (
-		<div className='h-[88vh] w-full bg-black text-white flex flex-col p-4'>
+		<div className='h-[88vh] w-full bg-black text-white flex flex-col p-4 pt-14 mt-2'>
 			{activeFriend === null ? (
 				<>
 					<h2 className='text-xl font-bold mb-4'>Друзья</h2>

@@ -47,7 +47,7 @@ export default function Home() {
 	}
 
 	return (
-		<main className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white flex flex-col gap-4 py-4 px-4'>
+		<main className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white flex flex-col gap-4 py-4 px-4 pt-14 pb-14'>
 			{posts.length > 0 ? (
 				posts.map(post => (
 					<Post

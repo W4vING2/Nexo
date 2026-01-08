@@ -100,20 +100,19 @@ export default function Profile() {
 		)
 
 	return (
-		<div className='flex flex-col h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
-			<div className='relative h-40 bg-gray-800 shrink-0'>
-				<div className='absolute -bottom-12 left-4'>
+		<div className='flex flex-col h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white pt-14 pb-14'>
+			<div className='flex-1 overflow-y-auto px-4 pt-4 pb-4'>
+				{/* Аватар теперь скроллится */}
+				<div className='w-28 h-28 rounded-full border-4 border-black overflow-hidden mb-4'>
 					<Image
 						src={user.avatarUrl || '/logo.png'}
 						alt='avatar'
-						width={200}
-						height={200}
-						className='w-28 h-28 rounded-full border-4 border-black object-cover'
+						width={112}
+						height={112}
+						className='w-full h-full object-cover'
 					/>
 				</div>
-			</div>
 
-			<div className='flex-1 overflow-y-auto pt-16 px-4 w-screen mx-auto'>
 				<div className='flex justify-between items-start'>
 					<div>
 						<h1 className='text-2xl font-bold'>{user.name}</h1>
