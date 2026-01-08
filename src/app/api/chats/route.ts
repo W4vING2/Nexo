@@ -37,3 +37,46 @@ export async function POST(req: Request) {
 		return NextResponse.json({ error: 'Server error' }, { status: 500 })
 	}
 }
+
+export async function GET(req: Request) {
+	try {
+		const url = new URL(req.url)
+		const userId = Number(url.searchParams.get('userId'))
+		if (!userId) {
+			return NextResponse.json({ error: 'userId required' }, { status: 400 })
+		}
+
+		const chats = await prisma.chat.findMany({
+			where: {
+				users: {
+					some: { userId }, // показываем только чаты где есть текущий пользователь
+				},
+			},
+			include: {
+				users: {
+					select: {
+						userId: true,
+						user: {
+							select: { id: true, username: true, avatarUrl: true },
+						},
+					},
+				},
+				messages: {
+					take: 1,
+					orderBy: { createdAt: 'desc' },
+				},
+			},
+		})
+
+		// Убираем пользователей, которых нет
+		const sanitizedChats = chats.map(chat => ({
+			...chat,
+			users: chat.users.filter(u => u.user !== null),
+		}))
+
+		return NextResponse.json({ chats: sanitizedChats })
+	} catch (err) {
+		console.error('GET /api/chats error:', err)
+		return NextResponse.json({ error: 'Server error' }, { status: 500 })
+	}
+}

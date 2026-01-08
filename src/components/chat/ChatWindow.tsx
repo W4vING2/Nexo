@@ -11,7 +11,7 @@ interface Chat {
 interface Message {
 	id: number
 	text: string
-	user: { id: number; username: string }
+	user: { id: number; username: string } | null
 	createdAt: string
 }
 
@@ -30,7 +30,13 @@ export default function ChatWindow({ chat, onBack }: Props) {
 		if (!chat) return
 		fetch(`/api/chats/${chat.id}/messages`)
 			.then(res => res.json())
-			.then(data => setMessages(data ?? []))
+			.then(data => {
+				// фильтруем пустых пользователей
+				const filtered = (data ?? []).filter(
+					(msg: Message) => msg.user !== null
+				)
+				setMessages(filtered)
+			})
 			.catch(console.error)
 	}, [chat])
 
@@ -47,8 +53,8 @@ export default function ChatWindow({ chat, onBack }: Props) {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body),
 		})
-		const newMessage = await res.json()
-		setMessages(prev => [...prev, newMessage])
+		const newMessage: Message = await res.json()
+		if (newMessage.user) setMessages(prev => [...prev, newMessage])
 		setText('')
 	}
 
@@ -66,12 +72,12 @@ export default function ChatWindow({ chat, onBack }: Props) {
 					<div
 						key={msg.id}
 						className={`flex ${
-							msg.user.id === user?.id ? 'justify-end' : 'justify-start'
+							msg.user!.id === user?.id ? 'justify-end' : 'justify-start'
 						}`}
 					>
 						<div
 							className={`px-3 py-2 rounded-xl w-max max-w-[80%] wrap-break-words ${
-								msg.user.id === user?.id
+								msg.user!.id === user?.id
 									? 'bg-blue-600 text-white'
 									: 'bg-gray-800 text-gray-200'
 							}`}

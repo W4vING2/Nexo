@@ -27,7 +27,10 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 		'idle' | 'pending' | 'sent'
 	>('idle')
 	const [posts, setPosts] = useState<PostType[]>([])
+	const [isFriend, setIsFriend] = useState<boolean>(false)
+	const [loadingStatus, setLoadingStatus] = useState(true)
 
+	// Загружаем друзей
 	useEffect(() => {
 		if (!user?.id) return
 
@@ -37,6 +40,7 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 			.catch(console.error)
 	}, [user?.id])
 
+	// Загружаем посты
 	useEffect(() => {
 		if (!user?.id) return
 
@@ -45,6 +49,35 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 			.then(data => setPosts(data.posts ?? []))
 			.catch(console.error)
 	}, [user?.id])
+
+	// Проверяем, является ли текущий пользователь другом
+	useEffect(() => {
+		if (!currentUser?.id || !user?.id) return
+
+		if (currentUser.id === user.id) {
+			setIsFriend(true)
+			setLoadingStatus(false)
+			return
+		}
+
+		const checkFriend = async () => {
+			try {
+				const res = await fetch(
+					`/api/friends/status?userId=${currentUser.id}&targetId=${user.id}`
+				)
+				if (!res.ok) throw new Error('Error checking friend status')
+				const data = await res.json()
+				setIsFriend(Boolean(data.isFriend))
+			} catch (e) {
+				console.error(e)
+				setIsFriend(false)
+			} finally {
+				setLoadingStatus(false)
+			}
+		}
+
+		checkFriend()
+	}, [currentUser?.id, user?.id])
 
 	const sendFriendRequest = async () => {
 		if (!currentUser?.id) return
@@ -71,6 +104,7 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 			}
 
 			setRequestStatus('sent')
+			setIsFriend(true) // сразу помечаем как друга после отправки
 		} catch (e) {
 			console.error(e)
 			setRequestStatus('idle')
@@ -89,7 +123,7 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				<div className='w-24 h-24 rounded-full bg-gray-700 overflow-hidden'>
 					<Image
 						src={user.avatarUrl || '/logo.png'}
-						alt='avatar'
+						alt={user.username || 'avatar'}
 						width={96}
 						height={96}
 						className='w-full h-full object-cover'
@@ -101,17 +135,28 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				<div className='flex gap-3'>
 					<BackButton />
 
-					{currentUser?.id && currentUser.id !== user.id && (
-						<button
-							onClick={sendFriendRequest}
-							disabled={requestStatus !== 'idle'}
-							className='px-4 py-2 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-full transition disabled:opacity-50'
-						>
-							{requestStatus === 'sent'
-								? 'Заявка отправлена'
-								: 'Добавить в друзья'}
-						</button>
-					)}
+					{loadingStatus ? (
+						<p>Загрузка...</p>
+					) : currentUser?.id && currentUser.id !== user.id ? (
+						isFriend ? (
+							<button
+								disabled
+								className='px-4 py-2 rounded-xl bg-green-700 text-white'
+							>
+								✓ Друзья
+							</button>
+						) : (
+							<button
+								onClick={sendFriendRequest}
+								disabled={requestStatus !== 'idle'}
+								className='px-4 py-2 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-full transition disabled:opacity-50'
+							>
+								{requestStatus === 'sent'
+									? 'Заявка отправлена'
+									: 'Добавить в друзья'}
+							</button>
+						)
+					) : null}
 				</div>
 			</div>
 
