@@ -23,39 +23,38 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 	const { user: currentUser } = nexoStore()
 
 	const [friends, setFriends] = useState<Friend[]>([])
-	const [requestStatus, setRequestStatus] = useState<
-		'idle' | 'pending' | 'sent'
-	>('idle')
 	const [posts, setPosts] = useState<PostType[]>([])
 	const [isFriend, setIsFriend] = useState<boolean>(false)
 	const [loadingStatus, setLoadingStatus] = useState(true)
+	const [requestStatus, setRequestStatus] = useState<
+		'idle' | 'pending' | 'sent'
+	>('idle')
 
-	// Загружаем друзей
+	// Загружаем друзей пользователя
 	useEffect(() => {
 		if (!user?.id) return
-
 		fetch(`/api/friends?userId=${user.id}`)
 			.then(res => res.json())
 			.then(data => setFriends(data.friends ?? []))
 			.catch(console.error)
 	}, [user?.id])
 
-	// Загружаем посты
+	// Загружаем посты пользователя
 	useEffect(() => {
 		if (!user?.id) return
-
 		fetch(`/api/posts?userId=${user.id}`)
 			.then(res => res.json())
 			.then(data => setPosts(data.posts ?? []))
 			.catch(console.error)
 	}, [user?.id])
 
-	// Проверяем, является ли текущий пользователь другом
+	// Проверяем статус дружбы и заявки
 	useEffect(() => {
 		if (!currentUser?.id || !user?.id) return
 
 		if (currentUser.id === user.id) {
 			setIsFriend(true)
+			setRequestStatus('idle')
 			setLoadingStatus(false)
 			return
 		}
@@ -68,9 +67,11 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				if (!res.ok) throw new Error('Error checking friend status')
 				const data = await res.json()
 				setIsFriend(Boolean(data.isFriend))
+				setRequestStatus(data.hasPendingRequest ? 'sent' : 'idle')
 			} catch (e) {
 				console.error(e)
 				setIsFriend(false)
+				setRequestStatus('idle')
 			} finally {
 				setLoadingStatus(false)
 			}
@@ -79,6 +80,7 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 		checkFriend()
 	}, [currentUser?.id, user?.id])
 
+	// Отправка заявки
 	const sendFriendRequest = async () => {
 		if (!currentUser?.id) return
 		if (currentUser.id === user.id) return
@@ -103,8 +105,7 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				return
 			}
 
-			setRequestStatus('sent')
-			setIsFriend(true) // сразу помечаем как друга после отправки
+			setRequestStatus('sent') // Заявка отправлена
 		} catch (e) {
 			console.error(e)
 			setRequestStatus('idle')
@@ -120,6 +121,7 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 	return (
 		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
 			<div className='max-w-xl mx-auto px-4 py-10 flex flex-col items-center gap-4'>
+				{/* Аватар */}
 				<div className='w-24 h-24 rounded-full bg-gray-700 overflow-hidden'>
 					<Image
 						src={user.avatarUrl || '/logo.png'}
@@ -145,21 +147,27 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 							>
 								✓ Друзья
 							</button>
+						) : requestStatus === 'sent' ? (
+							<button
+								disabled
+								className='px-4 py-2 rounded-xl bg-gray-500 text-white'
+							>
+								Заявка отправлена
+							</button>
 						) : (
 							<button
 								onClick={sendFriendRequest}
 								disabled={requestStatus !== 'idle'}
 								className='px-4 py-2 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-full transition disabled:opacity-50'
 							>
-								{requestStatus === 'sent'
-									? 'Заявка отправлена'
-									: 'Добавить в друзья'}
+								Добавить в друзья
 							</button>
 						)
 					) : null}
 				</div>
 			</div>
 
+			{/* Друзья */}
 			<div className='max-w-xl mx-auto px-4 py-4'>
 				<h2 className='text-lg font-bold mb-2'>Друзья</h2>
 				<div className='flex flex-wrap gap-3'>
@@ -171,6 +179,7 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				</div>
 			</div>
 
+			{/* Посты */}
 			<div className='max-w-xl mx-auto px-4 py-4 flex flex-col gap-4'>
 				<h2 className='text-lg font-bold mb-2'>Посты пользователя</h2>
 

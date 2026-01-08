@@ -1,51 +1,62 @@
 import prisma from '@/../lib/prisma'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function POST(req: NextRequest) {
-	const { userId, friendId } = await req.json()
+export async function POST(req: Request) {
+	try {
+		const { userIds } = await req.json()
 
-	if (!userId || !friendId) {
-		return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
-	}
+		if (!Array.isArray(userIds) || userIds.length < 2) {
+			return NextResponse.json(
+				{ error: 'At least 2 users required' },
+				{ status: 400 }
+			)
+		}
 
-	const isFriend = await prisma.friend.findFirst({
-		where: {
-			OR: [
-				{ userId, friendId },
-				{ userId: friendId, friendId: userId },
-			],
-		},
-	})
+		const sortedIds = [...userIds].sort((a, b) => a - b)
 
-	if (!isFriend) {
-		return NextResponse.json({ error: 'Not friends' }, { status: 403 })
-	}
-
-	const existingChat = await prisma.chat.findFirst({
-		where: {
-			users: {
-				every: {
-					userId: { in: [userId, friendId] },
-				},
+		// Проверяем существующие чаты
+		const existingChats = await prisma.chat.findMany({
+			where: {
+				AND: sortedIds.map(id => ({
+					users: { some: { userId: id } },
+				})),
 			},
-		},
-		include: { users: true },
-	})
-
-	if (existingChat) {
-		return NextResponse.json(existingChat)
-	}
-
-	const chat = await prisma.chat.create({
-		data: {
-			users: {
-				createMany: {
-					data: [{ userId }, { userId: friendId }],
+			include: {
+				users: {
+					select: {
+						userId: true,
+						user: { select: { id: true, username: true, avatarUrl: true } },
+					},
 				},
+				messages: { take: 1, orderBy: { createdAt: 'desc' } },
 			},
-		},
-		include: { users: true },
-	})
+		})
 
-	return NextResponse.json(chat)
+		const chat = existingChats.find(c => {
+			const ids = c.users.map(u => u.userId).sort((a, b) => a - b)
+			return JSON.stringify(ids) === JSON.stringify(sortedIds)
+		})
+
+		if (chat) return NextResponse.json(chat)
+
+		const newChat = await prisma.chat.create({
+			data: {
+				users: { create: userIds.map(id => ({ userId: id })) },
+			},
+			include: {
+				users: {
+					select: {
+						userId: true,
+						user: { select: { id: true, username: true, avatarUrl: true } },
+					},
+				},
+				messages: true,
+			},
+		})
+
+		return NextResponse.json(newChat)
+	} catch (err) {
+		console.error('POST /api/chats/get-or-create error:', err)
+		return NextResponse.json({ error: 'Server error' }, { status: 500 })
+	}
 }
