@@ -32,6 +32,24 @@ export default function Profile() {
 	const [loading, setLoading] = useState(false)
 
 	useEffect(() => {
+		if (!user?.email) return
+
+		fetch(`/api/user/get?email=${encodeURIComponent(user.email)}`)
+			.then(res => res.json())
+			.then(data => {
+				if (!data.error) {
+					setUser({
+						...user,
+						name: data.name,
+						bio: data.bio,
+						avatarUrl: data.avatarUrl,
+					})
+				}
+			})
+			.catch(console.error)
+	}, [user, setUser])
+
+	useEffect(() => {
 		if (!user?.id) return
 
 		fetch(`/api/posts?userId=${user.id}`)
@@ -109,7 +127,7 @@ export default function Profile() {
 						alt='avatar'
 						width={112}
 						height={112}
-						className='w-full h-full object-cover'
+						className='w-full h-full object-contain'
 					/>
 				</div>
 

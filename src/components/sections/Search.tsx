@@ -90,13 +90,15 @@ export default function Search() {
 					>
 						<div className='w-10 h-10 rounded-full bg-gray-700 overflow-hidden'>
 							{user.avatarUrl && (
-								<Image
-									src={user.avatarUrl ? `/${user.avatarUrl}` : '/logo.png'}
-									alt=''
-									width={40}
-									height={40}
-									className='w-full h-full object-cover'
-								/>
+								<div className='w-10 h-10 rounded-full bg-gray-700 overflow-hidden'>
+									<Image
+										src={user.avatarUrl || '/logo.png'} // используем полный URL или дефолт
+										alt={`@${user.username}`}
+										width={40}
+										height={40}
+										className='w-full h-full object-cover'
+									/>
+								</div>
 							)}
 						</div>
 

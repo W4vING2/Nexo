@@ -6,13 +6,14 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 export default function Post({
+	id,
 	user,
 	text,
+	avatar, // добавили
 	likes = 0,
 	dislikes = 0,
-	id,
 	createdAt,
-}: PostProps) {
+}: PostProps & { avatar?: string }) {
 	const { user: currentUser } = nexoStore()
 	const [likeCount, setLikeCount] = useState(likes)
 	const [dislikeCount, setDislikeCount] = useState(dislikes)
@@ -85,11 +86,11 @@ export default function Post({
 		<div className='flex p-5 gap-4 border-b border-gray-800 hover:bg-zinc-900 transition w-[95%] mx-auto rounded-xl'>
 			<div className='w-12 h-12 rounded-full bg-zinc-700 shrink-0'>
 				<Image
-					src={currentUser?.avatarUrl || '/logo.png'}
+					src={avatar || '/logo.png'}
 					alt={user}
 					width={48}
 					height={48}
-					className='w-full h-full object-cover'
+					className='w-full h-full object-contain'
 				/>
 			</div>
 			<div className='flex flex-col gap-2 w-full'>
