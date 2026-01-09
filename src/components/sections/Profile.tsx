@@ -122,20 +122,21 @@ export default function Profile() {
 		[user?.id]
 	)
 
-	// ✅ Мемоизация постов
+	// ✅ Мемоизация постов с актуальной аватаркой
 	const renderedPosts = useMemo(() => {
 		return posts.map(post => (
 			<Post
 				key={post.id}
 				id={post.id}
 				user={user?.username ?? 'Неизвестный пользователь'}
+				avatar={user?.avatarUrl ?? '/logo.png'} // актуальная аватарка
 				text={post.content}
 				likes={post.likes}
 				dislikes={post.dislikes}
 				createdAt={post.createdAt.toString()}
 			/>
 		))
-	}, [posts, user?.username])
+	}, [posts, user?.username, user?.avatarUrl])
 
 	// ✅ Мемоизация друзей
 	const renderedFriends = useMemo(() => {
