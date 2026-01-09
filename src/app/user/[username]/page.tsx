@@ -1,5 +1,5 @@
 // app/user/[username]/page.tsx
-import UserProfileClient from '@/components/ui/UserProfile'
+import { UserProfileClient } from '@/components/ui/UserProfile'
 import getAll from '@/utils/user/getAll'
 import { notFound } from 'next/navigation'
 
