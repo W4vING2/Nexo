@@ -1,79 +1,77 @@
-// ProfileEditModal.tsx
 'use client'
 
 import nexoStore from '@/store/nexoStore'
 import { updateUser } from '@/utils/updateUser'
 import Image from 'next/image'
-import { useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 
-export default function ProfileEditModal() {
+const ProfileEditModal = () => {
 	const { user, setUser } = nexoStore()
 	const [isOpen, setIsOpen] = useState(false)
 	const [preview, setPreview] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 
-	if (!user) return null
-
-	// Превью аватарки
-	const onAvatarChange = (file: File | null) => {
+	const onAvatarChange = useCallback((file: File | null) => {
 		if (!file) {
 			setPreview(null)
 			return
 		}
 		setPreview(URL.createObjectURL(file))
-	}
+	}, [])
 
-	const onSubmit = async (formData: FormData) => {
-		if (loading) return
-		setLoading(true)
+	const onSubmit = useCallback(
+		async (formData: FormData) => {
+			if (!user || loading) return
 
-		const name = (formData.get('name') as string) || user.name
-		const bio = (formData.get('bio') as string) || user.bio
-		const avatar = formData.get('avatar') as File | null
+			setLoading(true)
+			const name = (formData.get('name') as string) || user.name
+			const bio = (formData.get('bio') as string) || user.bio
+			const avatar = formData.get('avatar') as File | null
 
-		try {
-			let avatarUrl = user.avatarUrl ?? undefined
+			try {
+				let avatarUrl = user.avatarUrl ?? undefined
 
-			// 1️⃣ Загрузка аватарки на сервер
-			if (avatar && avatar.size > 0) {
-				const fd = new FormData()
-				fd.append('avatar', avatar) // ⚠️ важно: поле называется avatar
-				fd.append('email', user.email)
+				if (avatar && avatar.size > 0) {
+					const fd = new FormData()
+					fd.append('avatar', avatar)
+					fd.append('email', user.email)
 
-				const res = await fetch('/api/user/avatar', {
-					method: 'POST',
-					body: fd, // Content-Type не ставим вручную!
+					const res = await fetch('/api/user/avatar', {
+						method: 'POST',
+						body: fd,
+					})
+
+					if (!res.ok) throw new Error('Avatar upload failed')
+					const data = await res.json()
+					avatarUrl = data.avatarUrl
+				}
+
+				const updated = await updateUser({
+					email: user.email,
+					name,
+					bio: bio ?? undefined,
 				})
 
-				if (!res.ok) throw new Error('Avatar upload failed')
-				const data = await res.json()
-				avatarUrl = data.avatarUrl
+				setUser({
+					...user,
+					name: updated.name ?? name,
+					bio: updated.bio ?? bio,
+					avatarUrl: avatarUrl ?? user.avatarUrl ?? null,
+				})
+
+				setIsOpen(false)
+				setPreview(null)
+			} catch (err) {
+				console.error('Failed to update profile', err)
+				alert('Ошибка при обновлении профиля')
+			} finally {
+				setLoading(false)
 			}
+		},
+		[user, setUser, loading]
+	)
 
-			// 2️⃣ Обновление имени и био
-			const updated = await updateUser({
-				email: user.email,
-				name,
-				bio: bio ?? undefined,
-			})
-
-			// 3️⃣ Обновление store
-			setUser({
-				...user,
-				name: updated.name ?? name,
-				bio: updated.bio ?? bio,
-				avatarUrl: avatarUrl ?? user.avatarUrl ?? null,
-			})
-
-			setIsOpen(false)
-			setPreview(null)
-		} catch (err) {
-			console.error('Failed to update profile', err)
-			alert('Ошибка при обновлении профиля')
-		} finally {
-			setLoading(false)
-		}
-	}
+	if (!user) return null
 
 	return (
 		<>
@@ -111,10 +109,10 @@ export default function ProfileEditModal() {
 									accept='image/*'
 									onChange={e => onAvatarChange(e.target.files?.[0] ?? null)}
 									className='text-sm text-gray-300
-                    file:mr-3 file:px-4 file:py-2
-                    file:rounded-full file:border-0
-                    file:bg-gray-700 file:text-white
-                    hover:file:bg-gray-600'
+										file:mr-3 file:px-4 file:py-2
+										file:rounded-full file:border-0
+										file:bg-gray-700 file:text-white
+										hover:file:bg-gray-600'
 								/>
 							</div>
 
@@ -162,3 +160,5 @@ export default function ProfileEditModal() {
 		</>
 	)
 }
+
+export default memo(ProfileEditModal)

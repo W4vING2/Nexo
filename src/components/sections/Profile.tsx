@@ -4,7 +4,7 @@ import Post from '@/components/ui/Post'
 import nexoStore from '@/store/nexoStore'
 import type { Post as PostType } from '@/types/post.types'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import FriendCard from '../ui/FriendCard'
 import ProfileEditModal from '../ui/ProfileEdit'
 
@@ -31,12 +31,16 @@ export default function Profile() {
 	const [content, setContent] = useState('')
 	const [loading, setLoading] = useState(false)
 
+	// ✅ Загрузка пользователя
 	useEffect(() => {
 		if (!user?.email) return
 
-		fetch(`/api/user/get?email=${encodeURIComponent(user.email)}`)
-			.then(res => res.json())
-			.then(data => {
+		const fetchUser = async () => {
+			try {
+				const res = await fetch(
+					`/api/user/get?email=${encodeURIComponent(user.email)}`
+				)
+				const data = await res.json()
 				if (!data.error) {
 					setUser({
 						...user,
@@ -45,10 +49,15 @@ export default function Profile() {
 						avatarUrl: data.avatarUrl,
 					})
 				}
-			})
-			.catch(console.error)
-	}, [user, setUser])
+			} catch (err) {
+				console.error(err)
+			}
+		}
 
+		fetchUser()
+	}, [user?.email])
+
+	// ✅ Загрузка постов, друзей и заявок
 	useEffect(() => {
 		if (!user?.id) return
 
@@ -68,7 +77,8 @@ export default function Profile() {
 			.catch(console.error)
 	}, [user?.id])
 
-	const onCreatePost = async () => {
+	// ✅ Создание поста
+	const onCreatePost = useCallback(async () => {
 		if (!content.trim() || !user?.id || loading) return
 		setLoading(true)
 		try {
@@ -83,32 +93,102 @@ export default function Profile() {
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [content, loading, user?.id])
 
-	const handleFriendRequest = async (requestId: number, accept: boolean) => {
-		try {
-			const res = await fetch(`/api/friends/request/${requestId}`, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ accept }),
-			})
-
-			if (!res.ok) {
-				const error = await res.json()
-				console.error('Friend request error:', error)
-				return
+	// ✅ Обработка заявок в друзья
+	const handleFriendRequest = useCallback(
+		async (requestId: number, accept: boolean) => {
+			try {
+				const res = await fetch(`/api/friends/request/${requestId}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ accept }),
+				})
+				if (!res.ok) {
+					const error = await res.json()
+					console.error('Friend request error:', error)
+					return
+				}
+				setFriendRequests(prev => prev.filter(r => r.id !== requestId))
+				if (accept) {
+					fetch(`/api/friends?userId=${user?.id}`)
+						.then(res => res.json())
+						.then(data => setFriends(data.friends ?? []))
+				}
+			} catch (err) {
+				console.error(err)
 			}
+		},
+		[user?.id]
+	)
 
-			setFriendRequests(prev => prev.filter(r => r.id !== requestId))
-			if (accept) {
-				fetch(`/api/friends?userId=${user?.id}`)
-					.then(res => res.json())
-					.then(data => setFriends(data.friends ?? []))
-			}
-		} catch (err) {
-			console.error(err)
-		}
-	}
+	// ✅ Мемоизация постов
+	const renderedPosts = useMemo(() => {
+		return posts.map(post => (
+			<Post
+				key={post.id}
+				id={post.id}
+				user={user?.username ?? 'Неизвестный пользователь'}
+				text={post.content}
+				likes={post.likes}
+				dislikes={post.dislikes}
+				createdAt={post.createdAt.toString()}
+			/>
+		))
+	}, [posts, user?.username])
+
+	// ✅ Мемоизация друзей
+	const renderedFriends = useMemo(() => {
+		return friends.length ? (
+			friends.map(f => <FriendCard key={f.id} friend={f} />)
+		) : (
+			<p className='text-gray-400'>Нет друзей</p>
+		)
+	}, [friends])
+
+	// ✅ Мемоизация заявок
+	const renderedFriendRequests = useMemo(() => {
+		return friendRequests.length ? (
+			<div className='bg-gray-800 p-3 rounded-xl mb-4'>
+				<h3 className='font-medium mb-2'>Заявки в друзья</h3>
+				<div className='flex flex-col gap-2'>
+					{friendRequests.map(req => (
+						<div
+							key={req.id}
+							className='flex items-center justify-between bg-gray-900 p-2 rounded-xl'
+						>
+							<div className='flex items-center gap-2'>
+								{req.fromUser.avatarUrl && (
+									<Image
+										src={req.fromUser.avatarUrl}
+										width={32}
+										height={32}
+										alt={req.fromUser.username}
+										className='rounded-full object-cover'
+									/>
+								)}
+								<p className='text-sm'>@{req.fromUser.username}</p>
+							</div>
+							<div className='flex gap-2'>
+								<button
+									onClick={() => handleFriendRequest(req.id, true)}
+									className='px-2 py-1 bg-blue-600 rounded-full text-xs'
+								>
+									Принять
+								</button>
+								<button
+									onClick={() => handleFriendRequest(req.id, false)}
+									className='px-2 py-1 bg-red-600 rounded-full text-xs'
+								>
+									Отклонить
+								</button>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		) : null
+	}, [friendRequests, handleFriendRequest])
 
 	if (!user)
 		return (
@@ -120,7 +200,6 @@ export default function Profile() {
 	return (
 		<div className='flex flex-col h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white pt-14 pb-14'>
 			<div className='flex-1 overflow-y-auto px-4 pt-4 pb-4'>
-				{/* Аватар теперь скроллится */}
 				<div className='w-28 h-28 rounded-full border-4 border-black overflow-hidden mb-4'>
 					<Image
 						src={user.avatarUrl || '/logo.png'}
@@ -147,54 +226,8 @@ export default function Profile() {
 
 				<div className='mt-6'>
 					<h2 className='text-lg font-bold mb-2'>Друзья</h2>
-					<div className='flex flex-wrap gap-3 mb-4'>
-						{friends.length === 0 ? (
-							<p className='text-gray-400'>Нет друзей</p>
-						) : (
-							friends.map(f => <FriendCard key={f.id} friend={f} />)
-						)}
-					</div>
-
-					{friendRequests.length > 0 && (
-						<div className='bg-gray-800 p-3 rounded-xl mb-4'>
-							<h3 className='font-medium mb-2'>Заявки в друзья</h3>
-							<div className='flex flex-col gap-2'>
-								{friendRequests.map(req => (
-									<div
-										key={req.id}
-										className='flex items-center justify-between bg-gray-900 p-2 rounded-xl'
-									>
-										<div className='flex items-center gap-2'>
-											{req.fromUser.avatarUrl && (
-												<Image
-													src={req.fromUser.avatarUrl}
-													width={32}
-													height={32}
-													alt={req.fromUser.username}
-													className='rounded-full object-cover'
-												/>
-											)}
-											<p className='text-sm'>@{req.fromUser.username}</p>
-										</div>
-										<div className='flex gap-2'>
-											<button
-												onClick={() => handleFriendRequest(req.id, true)}
-												className='px-2 py-1 bg-blue-600 rounded-full text-xs'
-											>
-												Принять
-											</button>
-											<button
-												onClick={() => handleFriendRequest(req.id, false)}
-												className='px-2 py-1 bg-red-600 rounded-full text-xs'
-											>
-												Отклонить
-											</button>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
-					)}
+					<div className='flex flex-wrap gap-3 mb-4'>{renderedFriends}</div>
+					{renderedFriendRequests}
 				</div>
 
 				<div className='mt-6 bg-gray-900 p-4 rounded-xl'>
@@ -220,17 +253,7 @@ export default function Profile() {
 					{posts.length === 0 ? (
 						<p className='text-center text-gray-400'>Пока нет постов</p>
 					) : (
-						posts.map(post => (
-							<Post
-								key={post.id}
-								id={post.id}
-								user={user.username!}
-								text={post.content}
-								likes={post.likes}
-								dislikes={post.dislikes}
-								createdAt={post.createdAt.toString()}
-							/>
-						))
+						renderedPosts
 					)}
 				</div>
 

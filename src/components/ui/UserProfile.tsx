@@ -6,7 +6,7 @@ import nexoStore from '@/store/nexoStore'
 import type { Post as PostType } from '@/types/post.types'
 import type { User as UserType } from '@/types/user.types'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import FriendCard from './FriendCard'
 
 interface Friend {
@@ -19,18 +19,16 @@ interface UserProfileClientProps {
 	user: UserType & { id: number }
 }
 
-export default function UserProfileClient({ user }: UserProfileClientProps) {
+function UserProfileClientComponent({ user }: UserProfileClientProps) {
 	const { user: currentUser } = nexoStore()
-
 	const [friends, setFriends] = useState<Friend[]>([])
 	const [posts, setPosts] = useState<PostType[]>([])
-	const [isFriend, setIsFriend] = useState<boolean>(false)
+	const [isFriend, setIsFriend] = useState(false)
 	const [loadingStatus, setLoadingStatus] = useState(true)
 	const [requestStatus, setRequestStatus] = useState<
 		'idle' | 'pending' | 'sent'
 	>('idle')
 
-	// Загружаем друзей пользователя
 	useEffect(() => {
 		if (!user?.id) return
 		fetch(`/api/friends?userId=${user.id}`)
@@ -39,7 +37,6 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 			.catch(console.error)
 	}, [user?.id])
 
-	// Загружаем посты пользователя
 	useEffect(() => {
 		if (!user?.id) return
 		fetch(`/api/posts?userId=${user.id}`)
@@ -48,17 +45,14 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 			.catch(console.error)
 	}, [user?.id])
 
-	// Проверяем статус дружбы и заявки
 	useEffect(() => {
 		if (!currentUser?.id || !user?.id) return
-
 		if (currentUser.id === user.id) {
 			setIsFriend(true)
 			setRequestStatus('idle')
 			setLoadingStatus(false)
 			return
 		}
-
 		const checkFriend = async () => {
 			try {
 				const res = await fetch(
@@ -68,60 +62,43 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				const data = await res.json()
 				setIsFriend(Boolean(data.isFriend))
 				setRequestStatus(data.hasPendingRequest ? 'sent' : 'idle')
-			} catch (e) {
-				console.error(e)
+			} catch {
 				setIsFriend(false)
 				setRequestStatus('idle')
 			} finally {
 				setLoadingStatus(false)
 			}
 		}
-
 		checkFriend()
 	}, [currentUser?.id, user?.id])
 
-	// Отправка заявки
-	const sendFriendRequest = async () => {
-		if (!currentUser?.id) return
-		if (currentUser.id === user.id) return
-		if (requestStatus !== 'idle') return
-
+	const sendFriendRequest = useCallback(async () => {
+		if (
+			!currentUser?.id ||
+			currentUser.id === user.id ||
+			requestStatus !== 'idle'
+		)
+			return
 		setRequestStatus('pending')
-
 		try {
 			const res = await fetch('/api/friends/request', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					fromUserId: currentUser.id,
-					toUserId: user.id,
-				}),
+				body: JSON.stringify({ fromUserId: currentUser.id, toUserId: user.id }),
 			})
-
 			if (!res.ok) {
-				const err = await res.json()
-				console.error(err)
 				setRequestStatus('idle')
 				return
 			}
-
-			setRequestStatus('sent') // Заявка отправлена
-		} catch (e) {
-			console.error(e)
+			setRequestStatus('sent')
+		} catch {
 			setRequestStatus('idle')
 		}
-	}
-
-	if (!user) {
-		return (
-			<p className='text-center text-gray-400 mt-20'>Пользователь не найден</p>
-		)
-	}
+	}, [currentUser?.id, requestStatus, user.id])
 
 	return (
 		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white'>
 			<div className='max-w-xl mx-auto px-4 py-10 flex flex-col items-center gap-4'>
-				{/* Аватар */}
 				<div className='w-24 h-24 rounded-full bg-gray-700 overflow-hidden'>
 					<Image
 						src={user.avatarUrl || '/logo.png'}
@@ -136,7 +113,6 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 
 				<div className='flex gap-3'>
 					<BackButton />
-
 					{loadingStatus ? (
 						<p>Загрузка...</p>
 					) : currentUser?.id && currentUser.id !== user.id ? (
@@ -167,7 +143,6 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				</div>
 			</div>
 
-			{/* Друзья */}
 			<div className='max-w-xl mx-auto px-4 py-4'>
 				<h2 className='text-lg font-bold mb-2'>Друзья</h2>
 				<div className='flex flex-wrap gap-3'>
@@ -179,10 +154,8 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 				</div>
 			</div>
 
-			{/* Посты */}
 			<div className='max-w-xl mx-auto px-4 py-4 flex flex-col gap-4'>
 				<h2 className='text-lg font-bold mb-2'>Посты пользователя</h2>
-
 				{posts.length === 0 ? (
 					<p className='text-gray-400 text-sm'>Постов пока нет</p>
 				) : (
@@ -202,3 +175,5 @@ export default function UserProfileClient({ user }: UserProfileClientProps) {
 		</div>
 	)
 }
+
+export const UserProfileClient = memo(UserProfileClientComponent)

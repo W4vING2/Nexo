@@ -6,7 +6,7 @@ import { searchUsersByUsername } from '@/utils/searchUser'
 import { Search as SearchIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export default function Search() {
 	const { user: currentUser } = nexoStore()
@@ -36,9 +36,7 @@ export default function Search() {
 					setUsers(filtered)
 				}
 			} catch {
-				if (active) {
-					setUsers([])
-				}
+				if (active) setUsers([])
 			} finally {
 				if (active) setLoading(false)
 			}
@@ -48,12 +46,32 @@ export default function Search() {
 			active = false
 			clearTimeout(timeout)
 		}
-	}, [query, currentUser])
+	}, [query, currentUser?.username])
 
-	const handleUserClick = (username: string | null) => {
-		if (!username) return
-		router.push(`/user/${username}`)
-	}
+	const renderedUsers = useMemo(() => {
+		const handleUserClick = (username: string | null) => {
+			if (!username) return
+			router.push(`/user/${username}`)
+		}
+		return users.map(user => (
+			<div
+				key={user.id}
+				onClick={() => handleUserClick(user.username)}
+				className='flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition cursor-pointer'
+			>
+				<div className='w-10 h-10 rounded-full bg-gray-700 overflow-hidden'>
+					<Image
+						src={user.avatarUrl || '/logo.png'}
+						alt={`@${user.username}`}
+						width={40}
+						height={40}
+						className='w-full h-full object-cover'
+					/>
+				</div>
+				<p className='font-medium'>@{user.username}</p>
+			</div>
+		))
+	}, [users, router])
 
 	return (
 		<div className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white pt-14 pb-14'>
@@ -77,34 +95,10 @@ export default function Search() {
 
 			<div className='max-w-xl mx-auto px-4 pt-6 flex flex-col gap-3'>
 				{loading && <p className='text-gray-400 text-sm'>Поиск...</p>}
-
 				{!loading && users.length === 0 && query.length >= 1 && (
 					<p className='text-gray-400 text-sm'>Ничего не найдено</p>
 				)}
-
-				{users.map(user => (
-					<div
-						key={user.id}
-						onClick={() => handleUserClick(user.username)}
-						className='flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition cursor-pointer'
-					>
-						<div className='w-10 h-10 rounded-full bg-gray-700 overflow-hidden'>
-							{user.avatarUrl && (
-								<div className='w-10 h-10 rounded-full bg-gray-700 overflow-hidden'>
-									<Image
-										src={user.avatarUrl || '/logo.png'} // используем полный URL или дефолт
-										alt={`@${user.username}`}
-										width={40}
-										height={40}
-										className='w-full h-full object-cover'
-									/>
-								</div>
-							)}
-						</div>
-
-						<p className='font-medium'>@{user.username}</p>
-					</div>
-				))}
+				{renderedUsers}
 			</div>
 		</div>
 	)

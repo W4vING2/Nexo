@@ -3,7 +3,7 @@
 import nexoStore from '@/store/nexoStore'
 import { Friend, Message } from '@/types/chat.types'
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export default function MobileChat() {
 	const { user } = nexoStore()
@@ -14,7 +14,6 @@ export default function MobileChat() {
 	const bottomRef = useRef<HTMLDivElement>(null)
 	const [loading, setLoading] = useState(false)
 
-	// Загружаем друзей
 	useEffect(() => {
 		if (!user?.id) return
 		setLoading(true)
@@ -25,39 +24,38 @@ export default function MobileChat() {
 			.finally(() => setLoading(false))
 	}, [user?.id])
 
-	// Скролл вниз при новых сообщениях
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
 	}, [messages])
 
-	const startChat = async (friend: Friend) => {
-		setActiveFriend(friend)
-		setMessages([])
+	const startChat = useCallback(
+		async (friend: Friend) => {
+			setActiveFriend(friend)
+			setMessages([])
 
-		if (!user) return
-		try {
-			// Создаём или получаем чат
-			const res = await fetch('/api/chats/get-or-create', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userIds: [user.id, friend.id] }),
-			})
-			if (!res.ok) throw new Error('Failed to get or create chat')
+			if (!user) return
+			try {
+				const res = await fetch('/api/chats/get-or-create', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userIds: [user.id, friend.id] }),
+				})
+				if (!res.ok) throw new Error('Failed to get or create chat')
+				const chatData = await res.json()
+				const chatId = chatData?.id
+				if (!chatId) throw new Error('Chat ID missing')
 
-			const chatData = await res.json()
-			const chatId = chatData?.id
-			if (!chatId) throw new Error('Chat ID missing')
+				const messagesRes = await fetch(`/api/chats/${chatId}/messages`)
+				const data: Message[] = messagesRes.ok ? await messagesRes.json() : []
+				setMessages(data ?? [])
+			} catch (err) {
+				console.error(err)
+			}
+		},
+		[user]
+	)
 
-			// Получаем сообщения (может быть пусто для нового чата)
-			const messagesRes = await fetch(`/api/chats/${chatId}/messages`)
-			const data: Message[] = messagesRes.ok ? await messagesRes.json() : []
-			setMessages(data ?? [])
-		} catch (err) {
-			console.error(err)
-		}
-	}
-
-	const sendMessage = async () => {
+	const sendMessage = useCallback(async () => {
 		if (!input.trim() || !activeFriend || !user) return
 
 		try {
@@ -65,7 +63,6 @@ export default function MobileChat() {
 			const friendId = Number(activeFriend.id)
 			if (!userId || !friendId) return
 
-			// Получаем или создаём чат
 			const res = await fetch('/api/chats/get-or-create', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -76,7 +73,6 @@ export default function MobileChat() {
 			const chatId = Number(chat?.id)
 			if (!chatId) throw new Error('Chat ID missing')
 
-			// Создаём сообщение
 			const text = input.trim()
 			const msgRes = await fetch(`/api/chats/${chatId}/messages`, {
 				method: 'POST',
@@ -90,7 +86,47 @@ export default function MobileChat() {
 		} catch (err) {
 			console.error(err)
 		}
-	}
+	}, [input, activeFriend, user])
+
+	const renderedFriends = useMemo(() => {
+		return friends.map(friend => (
+			<button
+				key={friend.id}
+				className='flex items-center gap-3 p-2 bg-gray-800 rounded hover:bg-gray-700'
+				onClick={() => startChat(friend)}
+			>
+				<Image
+					src={friend.avatarUrl || '/logo.png'}
+					width={40}
+					height={40}
+					alt={friend.username}
+					className='rounded-full'
+				/>
+				<span>@{friend.username}</span>
+			</button>
+		))
+	}, [friends, startChat])
+
+	const renderedMessages = useMemo(() => {
+		return messages.map(msg => (
+			<div
+				key={msg.id}
+				className={`flex ${
+					msg.userId === user?.id ? 'justify-end' : 'justify-start'
+				}`}
+			>
+				<div
+					className={`px-3 py-2 rounded-xl w-max max-w-[80%] ${
+						msg.userId === user?.id
+							? 'bg-blue-600 text-white'
+							: 'bg-gray-800 text-gray-200'
+					}`}
+				>
+					{msg.text}
+				</div>
+			</div>
+		))
+	}, [messages, user?.id])
 
 	if (loading) return <p className='p-4 text-gray-400'>Загрузка друзей...</p>
 
@@ -102,29 +138,11 @@ export default function MobileChat() {
 					{friends.length === 0 ? (
 						<p className='text-gray-400'>У вас пока нет друзей</p>
 					) : (
-						<div className='flex flex-col gap-2'>
-							{friends.map(friend => (
-								<button
-									key={friend.id}
-									className='flex items-center gap-3 p-2 bg-gray-800 rounded hover:bg-gray-700'
-									onClick={() => startChat(friend)}
-								>
-									<Image
-										src={friend.avatarUrl || '/logo.png'}
-										width={40}
-										height={40}
-										alt={friend.username}
-										className='rounded-full'
-									/>
-									<span>@{friend.username}</span>
-								</button>
-							))}
-						</div>
+						<div className='flex flex-col gap-2'>{renderedFriends}</div>
 					)}
 				</>
 			) : (
 				<>
-					{/* Окно чата */}
 					<div className='flex items-center mb-4'>
 						<button
 							className='text-blue-500 mr-3'
@@ -139,24 +157,7 @@ export default function MobileChat() {
 						{messages.length === 0 && (
 							<p className='text-gray-400'>Пока нет сообщений</p>
 						)}
-						{messages.map(msg => (
-							<div
-								key={msg.id}
-								className={`flex ${
-									msg.userId === user?.id ? 'justify-end' : 'justify-start'
-								}`}
-							>
-								<div
-									className={`px-3 py-2 rounded-xl w-max max-w-[80%] ${
-										msg.userId === user?.id
-											? 'bg-blue-600 text-white'
-											: 'bg-gray-800 text-gray-200'
-									}`}
-								>
-									{msg.text}
-								</div>
-							</div>
-						))}
+						{renderedMessages}
 						<div ref={bottomRef} />
 					</div>
 

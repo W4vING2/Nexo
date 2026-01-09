@@ -3,13 +3,13 @@
 import nexoStore from '@/store/nexoStore'
 import { PostProps } from '@/types/post.types'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 
-export default function Post({
+function PostComponent({
 	id,
 	user,
 	text,
-	avatar, // добавили
+	avatar,
 	likes = 0,
 	dislikes = 0,
 	createdAt,
@@ -42,8 +42,11 @@ export default function Post({
 		fetchReaction()
 	}, [id, currentUser?.id])
 
-	function timeAgo(date: string) {
-		const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
+	const formattedTime = useMemo(() => {
+		if (!createdAt) return 'now'
+		const seconds = Math.floor(
+			(Date.now() - new Date(String(createdAt)).getTime()) / 1000
+		)
 		const intervals = [
 			{ label: 'y', seconds: 31536000 },
 			{ label: 'mo', seconds: 2592000 },
@@ -56,7 +59,7 @@ export default function Post({
 			if (count >= 1) return `${count}${i.label}`
 		}
 		return 'now'
-	}
+	}, [createdAt])
 
 	const react = async (type: 'like' | 'dislike') => {
 		if (!id || !currentUser?.id) return
@@ -96,9 +99,7 @@ export default function Post({
 			<div className='flex flex-col gap-2 w-full'>
 				<div className='flex items-center justify-between'>
 					<h1 className='font-bold text-white text-sm'>{user}</h1>
-					<span className='text-gray-500 text-xs'>
-						• {timeAgo(createdAt as string)}
-					</span>
+					<span className='text-gray-500 text-xs'>• {formattedTime}</span>
 				</div>
 				<p className='text-gray-200 text-sm leading-relaxed'>{text}</p>
 				<div className='flex gap-4 mt-2'>
@@ -127,3 +128,5 @@ export default function Post({
 		</div>
 	)
 }
+
+export default memo(PostComponent)
