@@ -79,3 +79,8 @@ export type ChatUser = Prisma.ChatUserModel
  * 
  */
 export type Message = Prisma.MessageModel
+/**
+ * Model Comment
+ * 
+ */
+export type Comment = Prisma.CommentModel

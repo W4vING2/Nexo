@@ -207,6 +207,7 @@ export default function Profile() {
 						width={112}
 						height={112}
 						className='w-full h-full object-contain'
+						loading='eager'
 					/>
 				</div>
 

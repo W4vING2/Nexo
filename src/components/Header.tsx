@@ -16,6 +16,7 @@ export default function Header() {
 						width={32}
 						height={32}
 						className='w-8 h-8 rounded-full object-cover'
+						loading='eager'
 					/>
 				</div>
 				<p className='font-extrabold text-lg tracking-tight'>Nexo</p>

@@ -28,6 +28,7 @@ model User {
 
   chats    ChatUser[]
   messages Message[]
+  comments Comment[]
 }
 
 model Post {
@@ -40,6 +41,7 @@ model Post {
 
   author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   reactions PostReaction[]
+  comments  Comment[]
 
   @@index([authorId])
 }
@@ -108,4 +110,18 @@ model Message {
 
   chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  text      String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
 }
