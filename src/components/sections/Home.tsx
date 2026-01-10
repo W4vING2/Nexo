@@ -1,7 +1,7 @@
 'use client'
 
 import Post from '@/components/ui/Post'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface PostType {
 	id: number
@@ -9,6 +9,7 @@ interface PostType {
 	createdAt: string
 	likes: number
 	dislikes: number
+	authorId: number
 	author: {
 		id: number
 		username: string | null
@@ -36,20 +37,9 @@ export default function Home() {
 		loadPosts()
 	}, [])
 
-	const renderedPosts = useMemo(() => {
-		return posts.map(post => (
-			<Post
-				key={post.id}
-				id={post.id}
-				avatar={post.author.avatarUrl || undefined}
-				text={post.content}
-				user={post.author.username || 'Неизвестный пользователь'}
-				likes={post.likes}
-				dislikes={post.dislikes}
-				createdAt={post.createdAt}
-			/>
-		))
-	}, [posts])
+	const handleDelete = (deletedId: number) => {
+		setPosts(prev => prev.filter(post => post.id !== deletedId))
+	}
 
 	if (loading) {
 		return (
@@ -62,7 +52,20 @@ export default function Home() {
 	return (
 		<main className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white flex flex-col gap-4 py-4 px-4 pt-14 pb-14'>
 			{posts.length > 0 ? (
-				renderedPosts
+				posts.map(post => (
+					<Post
+						key={post.id}
+						id={post.id}
+						authorId={post.author.id}
+						avatar={post.author.avatarUrl || undefined}
+						text={post.content}
+						user={post.author.username || 'Неизвестный пользователь'}
+						likes={post.likes}
+						dislikes={post.dislikes}
+						createdAt={post.createdAt}
+						onDelete={handleDelete} // pass onDelete
+					/>
+				))
 			) : (
 				<p className='text-center text-gray-400'>Постов пока нет</p>
 			)}

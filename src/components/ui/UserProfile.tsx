@@ -161,6 +161,7 @@ function UserProfileClientComponent({ user }: UserProfileClientProps) {
 				) : (
 					posts.map(post => (
 						<Post
+							authorId={post.authorId}
 							key={post.id}
 							id={post.id}
 							user={user.username || 'Неизвестный'}

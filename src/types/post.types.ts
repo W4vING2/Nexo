@@ -5,6 +5,7 @@ export interface PostProps {
 	createdAt?: string
 	id: number
 	likes?: number
+	authorId: number
 	dislikes?: number
 }
 
@@ -14,6 +15,7 @@ export interface Post {
 	createdAt: Date
 	likes: number
 	dislikes: number
+	authorId: number
 }
 
 export interface PageProps {

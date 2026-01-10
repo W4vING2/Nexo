@@ -2,6 +2,8 @@ import prisma from '@/../lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '../../../../../apps/generated/prisma/client'
 
+const ADMIN_EMAIL = 'danilavaganov41@gmail.com'
+
 // Тип для поста с автором
 type PostWithAuthor = Prisma.PostGetPayload<{
 	select: {
@@ -19,23 +21,43 @@ type PostWithAuthor = Prisma.PostGetPayload<{
 	}
 }>
 
-// DELETE остаётся как есть
 export async function DELETE(
-	req: NextRequest,
+	req: Request,
 	context: { params: Promise<{ id: string }> }
 ) {
-	try {
-		const { id } = await context.params
+	const { id } = await context.params
+	const postId = Number(id)
 
-		if (!id) {
-			return NextResponse.json(
-				{ error: 'Post id is required' },
-				{ status: 400 }
-			)
+	if (Number.isNaN(postId)) {
+		return NextResponse.json({ error: 'Invalid post id' }, { status: 400 })
+	}
+
+	const userId = Number(req.headers.get('x-user-id'))
+	const userEmail = req.headers.get('x-user-email')
+
+	if (!userId) {
+		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+	}
+
+	try {
+		const post = await prisma.post.findUnique({
+			where: { id: postId },
+			select: { authorId: true },
+		})
+
+		if (!post) {
+			return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+		}
+
+		const isOwner = post.authorId === userId
+		const isAdmin = userEmail === ADMIN_EMAIL
+
+		if (!isOwner && !isAdmin) {
+			return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 		}
 
 		await prisma.post.delete({
-			where: { id: Number(id) },
+			where: { id: postId },
 		})
 
 		return NextResponse.json({ success: true })
