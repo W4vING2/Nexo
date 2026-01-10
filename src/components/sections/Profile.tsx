@@ -43,7 +43,6 @@ export default function Profile() {
 	// ===== load user =====
 	useEffect(() => {
 		if (!user?.email) return
-
 		const fetchUser = async () => {
 			try {
 				const res = await fetch(
@@ -62,28 +61,34 @@ export default function Profile() {
 				console.error(err)
 			}
 		}
-
 		fetchUser()
-	}, [user?.email])
+	}, [user?.email, setUser])
 
-	// ===== load posts / friends =====
+	// ===== load posts / friends / requests =====
 	useEffect(() => {
 		if (!user?.id) return
 
-		fetch(`/api/posts?userId=${user.id}`)
-			.then(res => res.json())
-			.then(data => setPosts(data.posts ?? []))
-			.catch(console.error)
+		const fetchData = async () => {
+			try {
+				const postsRes = await fetch(`/api/posts?userId=${user.id}`)
+				const postsData = await postsRes.json()
+				setPosts(postsData.posts ?? [])
 
-		fetch(`/api/friends?userId=${user.id}`)
-			.then(res => res.json())
-			.then(data => setFriends(data.friends ?? []))
-			.catch(console.error)
+				const friendsRes = await fetch(`/api/friends?userId=${user.id}`)
+				const friendsData = await friendsRes.json()
+				setFriends(friendsData.friends ?? [])
 
-		fetch(`/api/friends/request?userId=${user.id}`)
-			.then(res => res.json())
-			.then(data => setFriendRequests(data.requests ?? []))
-			.catch(console.error)
+				const requestsRes = await fetch(
+					`/api/friends/request?userId=${user.id}`
+				)
+				const requestsData = await requestsRes.json()
+				setFriendRequests(requestsData.requests ?? [])
+			} catch (err) {
+				console.error(err)
+			}
+		}
+
+		fetchData()
 	}, [user?.id])
 
 	// ===== create post =====
@@ -104,7 +109,7 @@ export default function Profile() {
 		}
 	}, [content, loading, user?.id])
 
-	// ===== friend request =====
+	// ===== handle friend request =====
 	const handleFriendRequest = useCallback(
 		async (requestId: number, accept: boolean) => {
 			try {
@@ -118,9 +123,9 @@ export default function Profile() {
 				setFriendRequests(prev => prev.filter(r => r.id !== requestId))
 
 				if (accept) {
-					fetch(`/api/friends?userId=${user?.id}`)
-						.then(res => res.json())
-						.then(data => setFriends(data.friends ?? []))
+					const friendsRes = await fetch(`/api/friends?userId=${user?.id}`)
+					const friendsData = await friendsRes.json()
+					setFriends(friendsData.friends ?? [])
 				}
 			} catch (err) {
 				console.error(err)
@@ -129,80 +134,63 @@ export default function Profile() {
 		[user?.id]
 	)
 
-	// ===== posts =====
-	const renderedPosts = useMemo(
-		() =>
-			posts.map(post => (
-				<Post
-					key={post.id}
-					id={post.id}
-					onDelete={handlePostDelete}
-					authorId={post.authorId}
-					user={user?.username ?? 'Неизвестный'}
-					avatar={getAvatarSrc(user?.avatarUrl)}
-					text={post.content}
-					likes={post.likes}
-					dislikes={post.dislikes}
-					createdAt={post.createdAt.toString()}
-				/>
-			)),
-		[posts, user?.username, user?.avatarUrl]
-	)
+	// ===== memoized posts =====
+	const renderedPosts = useMemo(() => {
+		return posts.map(post => (
+			<Post
+				key={post.id}
+				id={post.id}
+				authorId={user?.id ?? 0}
+				user={user?.username ?? 'Неизвестный'}
+				avatar={getAvatarSrc(user?.avatarUrl)}
+				text={post.content}
+				likes={post.likes}
+				dislikes={post.dislikes}
+				createdAt={post.createdAt.toString()}
+				onDelete={handlePostDelete}
+			/>
+		))
+	}, [posts, user?.username, user?.avatarUrl, user?.id])
 
-	// ===== friends =====
-	const renderedFriends = useMemo(
-		() =>
-			friends.length ? (
-				friends.map(f => <FriendCard key={f.id} friend={f} />)
-			) : (
-				<p className='text-gray-400'>Нет друзей</p>
-			),
-		[friends]
-	)
+	// ===== memoized friends =====
+	const renderedFriends = useMemo(() => {
+		return friends.map(f => <FriendCard key={f.id} friend={f} />)
+	}, [friends])
 
-	// ===== requests =====
-	const renderedFriendRequests = useMemo(
-		() =>
-			friendRequests.length ? (
-				<div className='bg-gray-800 p-3 rounded-xl mb-4'>
-					<h3 className='font-medium mb-2'>Заявки в друзья</h3>
-					<div className='flex flex-col gap-2'>
-						{friendRequests.map(req => (
-							<div
-								key={req.id}
-								className='flex items-center justify-between bg-gray-900 p-2 rounded-xl'
-							>
-								<div className='flex items-center gap-2'>
-									<Image
-										src={getAvatarSrc(req.fromUser.avatarUrl)}
-										width={32}
-										height={32}
-										alt={req.fromUser.username}
-										className='rounded-full object-cover'
-									/>
-									<p className='text-sm'>@{req.fromUser.username}</p>
-								</div>
-								<div className='flex gap-2'>
-									<button
-										onClick={() => handleFriendRequest(req.id, true)}
-										className='px-2 py-1 bg-blue-600 rounded-full text-xs'
-									>
-										Принять
-									</button>
-									<button
-										onClick={() => handleFriendRequest(req.id, false)}
-										className='px-2 py-1 bg-red-600 rounded-full text-xs'
-									>
-										Отклонить
-									</button>
-								</div>
-							</div>
-						))}
-					</div>
+	// ===== memoized friend requests =====
+	const renderedFriendRequests = useMemo(() => {
+		return friendRequests.map(req => (
+			<div
+				key={req.id}
+				className='flex items-center justify-between bg-gray-900 p-2 rounded-xl'
+			>
+				<div className='flex items-center gap-2'>
+					<Image
+						src={getAvatarSrc(req.fromUser.avatarUrl)}
+						width={32}
+						height={32}
+						alt={req.fromUser.username}
+						className='rounded-full object-cover'
+					/>
+					<p className='text-sm'>@{req.fromUser.username}</p>
 				</div>
-			) : null,
-		[friendRequests, handleFriendRequest]
-	)
+				<div className='flex gap-2'>
+					<button
+						onClick={() => handleFriendRequest(req.id, true)}
+						className='px-2 py-1 bg-blue-600 rounded-full text-xs'
+					>
+						Принять
+					</button>
+					<button
+						onClick={() => handleFriendRequest(req.id, false)}
+						className='px-2 py-1 bg-red-600 rounded-full text-xs'
+					>
+						Отклонить
+					</button>
+				</div>
+			</div>
+		))
+	}, [friendRequests, handleFriendRequest])
 
 	if (!user) {
 		return (
@@ -215,6 +203,7 @@ export default function Profile() {
 	return (
 		<div className='flex flex-col h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white pt-14 pb-14'>
 			<div className='flex-1 overflow-y-auto px-4 pt-4 pb-4'>
+				{/* profile avatar */}
 				<div className='w-28 h-28 rounded-full border-4 border-black overflow-hidden mb-4'>
 					<Image
 						src={getAvatarSrc(user.avatarUrl)}
@@ -225,6 +214,7 @@ export default function Profile() {
 					/>
 				</div>
 
+				{/* profile info */}
 				<div className='flex justify-between items-start'>
 					<div>
 						<h1 className='text-2xl font-bold'>{user.name}</h1>
@@ -239,12 +229,29 @@ export default function Profile() {
 					</p>
 				)}
 
+				{/* friends */}
 				<div className='mt-6'>
 					<h2 className='text-lg font-bold mb-2'>Друзья</h2>
-					<div className='flex flex-wrap gap-3 mb-4'>{renderedFriends}</div>
-					{renderedFriendRequests}
+					<div className='flex flex-wrap gap-3 mb-4'>
+						{friends.length ? (
+							renderedFriends
+						) : (
+							<p className='text-gray-400'>Нет друзей</p>
+						)}
+					</div>
+
+					{/* friend requests */}
+					{friendRequests.length > 0 && (
+						<div className='bg-gray-800 p-3 rounded-xl mb-4'>
+							<h3 className='font-medium mb-2'>Заявки в друзья</h3>
+							<div className='flex flex-col gap-2'>
+								{renderedFriendRequests}
+							</div>
+						</div>
+					)}
 				</div>
 
+				{/* create post */}
 				<div className='mt-6 bg-gray-900 p-4 rounded-xl'>
 					<textarea
 						value={content}
@@ -264,14 +271,16 @@ export default function Profile() {
 					</div>
 				</div>
 
+				{/* posts */}
 				<div className='mt-6 flex flex-col gap-4'>
-					{posts.length === 0 ? (
-						<p className='text-center text-gray-400'>Пока нет постов</p>
-					) : (
+					{posts.length ? (
 						renderedPosts
+					) : (
+						<p className='text-center text-gray-400'>Пока нет постов</p>
 					)}
 				</div>
 
+				{/* logout */}
 				<div className='mt-6 mb-6'>
 					<button
 						onClick={() => {

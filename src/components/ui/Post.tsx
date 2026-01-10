@@ -4,7 +4,7 @@ import nexoStore from '@/store/nexoStore'
 import { PostProps } from '@/types/post.types'
 import { Heart, MessageCircle, ThumbsDown, Trash } from 'lucide-react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { memo, useEffect, useMemo, useState } from 'react'
 
 interface PostComponentProps extends PostProps {
@@ -22,7 +22,6 @@ function Post({
 	onDelete,
 }: PostComponentProps) {
 	const { user: currentUser } = nexoStore()
-	const router = useRouter()
 
 	const [likeCount, setLikeCount] = useState(0)
 	const [dislikeCount, setDislikeCount] = useState(0)
@@ -97,7 +96,8 @@ function Post({
 		}
 	}
 
-	const handleDelete = async () => {
+	const handleDelete = async (e: React.MouseEvent) => {
+		e.stopPropagation() // чтобы клик не перешел на Link
 		if (!id) return
 
 		try {
@@ -118,10 +118,16 @@ function Post({
 		}
 	}
 
-	const goToPostPage = () => router.push(`/post/${id}`)
+	const handleReact = (e: React.MouseEvent, type: 'like' | 'dislike') => {
+		e.stopPropagation() // чтобы клик не перешел на Link
+		react(type)
+	}
 
 	return (
-		<div className='flex gap-3 px-4 py-3 hover:bg-gray-950 transition-colors rounded-xl w-full border border-white/20'>
+		<Link
+			href={`/post/${id}`}
+			className='flex gap-3 px-4 py-3 hover:bg-gray-950 transition-colors rounded-xl w-full border border-white/20 group'
+		>
 			<Image
 				src={avatar || '/logo.png'}
 				alt={user || 'Неизвестный'}
@@ -147,7 +153,7 @@ function Post({
 
 				<div className='flex justify-between items-center mt-2 w-[65%] text-sm text-gray-400'>
 					<button
-						onClick={() => react('like')}
+						onClick={e => handleReact(e, 'like')}
 						className='flex items-center gap-1'
 					>
 						<Heart
@@ -161,7 +167,7 @@ function Post({
 					</button>
 
 					<button
-						onClick={() => react('dislike')}
+						onClick={e => handleReact(e, 'dislike')}
 						className='flex items-center gap-1'
 					>
 						<ThumbsDown
@@ -174,19 +180,22 @@ function Post({
 						{dislikeCount}
 					</button>
 
-					<button onClick={goToPostPage} className='flex items-center gap-1'>
+					<button
+						onClick={e => e.stopPropagation()} // stop if you want later for comments
+						className='flex items-center gap-1'
+					>
 						<MessageCircle className='w-4 h-4 stroke-gray-400 fill-black' />
 						{commentsCount}
 					</button>
 
 					{Number(currentUser?.id) === Number(authorId) && (
 						<button onClick={handleDelete} className='flex items-center gap-1'>
-							<Trash className='w-4 h-4 stroke-gray-400 fill-black z-90' />
+							<Trash className='w-4 h-4 stroke-gray-400 fill-black' />
 						</button>
 					)}
 				</div>
 			</div>
-		</div>
+		</Link>
 	)
 }
 

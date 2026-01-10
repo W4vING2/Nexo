@@ -3,7 +3,7 @@
 import Post from '@/components/ui/Post'
 import { useEffect, useState } from 'react'
 
-interface PostType {
+export interface PostType {
 	id: number
 	content: string
 	createdAt: string
@@ -50,7 +50,7 @@ export default function Home() {
 	}
 
 	return (
-		<main className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white flex flex-col gap-4 py-4 px-4 pt-14 pb-14'>
+		<main className='min-h-screen bg-linear-to-b from-gray-900 via-black to-gray-950 text-white flex flex-col gap-4 px-4 pt-20 pb-14'>
 			{posts.length > 0 ? (
 				posts.map(post => (
 					<Post

@@ -11,7 +11,7 @@ export default function Header() {
 			<div className='flex items-center justify-between h-full px-4 max-w-xl mx-auto'>
 				<div className='flex items-center gap-2'>
 					<Image
-						src={user?.avatarUrl || '/logo.png'}
+						src={user?.avatarUrl || '/logo.png'} // напрямую берем аватарку
 						alt='avatar'
 						width={32}
 						height={32}
