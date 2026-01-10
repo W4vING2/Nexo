@@ -44,10 +44,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
 	// Отправка нового комментария
 	const sendComment = async () => {
-		if (!input.trim() || !user?.id || !user?.username) {
-			console.error(
-				'Невозможно отправить комментарий: отсутствует userId или username'
-			)
+		if (!input.trim() || !user?.id) {
+			console.error('Невозможно отправить комментарий: отсутствует userId')
 			return
 		}
 

@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import './globals.css'
+import Providers from './providers'
 
 export const metadata: Metadata = {
 	title: 'Nexo',
@@ -24,7 +25,9 @@ export default function RootLayout({
 				<meta name='twitter:description' content='Social media app' />
 				<meta name='twitter:image' content='/favicon.png' />
 			</head>
-			<body>{children}</body>
+			<body>
+				<Providers>{children}</Providers>
+			</body>
 		</html>
 	)
 }
