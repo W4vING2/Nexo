@@ -1,8 +1,8 @@
 'use client'
 
-import Input from '@/components/ui/Input'
+import Input from '@/shared/Input'
 import nexoStore from '@/store/nexoStore'
-import { authorizeUser } from '@/utils/autorizeUser'
+import { authorizeUser } from '@/utils/user/autorizeUser'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 

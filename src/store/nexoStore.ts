@@ -1,23 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export interface User {
-	id: number
-	email: string
-	name: string
-	username: string | null
-	bio: string | null
-	avatarUrl: string | null
-}
-
-export interface StoreState {
-	user: User | null
-	isLogged: boolean
-	selectedPage: string
-	setSelectedPage: (page: string) => void
-	setIsLogged: (status: boolean) => void
-	setUser: (user: User | null) => void
-}
+import type { StoreState } from './store.types'
 
 const nexoStore = create<StoreState>()(
 	persist(
@@ -37,7 +20,7 @@ const nexoStore = create<StoreState>()(
 				}),
 		}),
 		{
-			name: 'nexo-user', // ключ в localStorage
+			name: 'nexo-user',
 		}
 	)
 )

@@ -1,5 +1,3 @@
-// /types/chat.types.ts
-
 export interface Friend {
 	id: number
 	username: string
@@ -11,7 +9,7 @@ export interface Message {
 	chatId: number
 	userId: number
 	text: string
-	createdAt: string
+	createdAt: Date
 	user?: {
 		id: number
 		username: string

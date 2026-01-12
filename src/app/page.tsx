@@ -1,10 +1,10 @@
 'use client'
 
-import FooterBar from '@/components/FooterBar'
-import Header from '@/components/Header'
-import Main from '@/components/Main'
+import FooterBar from '@/layout/FooterBar'
+import Header from '@/layout/Header'
+import Main from '@/layout/Main'
 import nexoStore from '@/store/nexoStore'
-import Sign from '../components/auth/Sign'
+import Sign from '../components/Register'
 
 export default function HomePage() {
 	const { isLogged } = nexoStore()
